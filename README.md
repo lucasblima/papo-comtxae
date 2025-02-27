@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-﻿# Papo Social
+# Papo Social
 
 Uma plataforma de comunicação inteligente com processamento de voz e orquestração de agentes de IA.
 
