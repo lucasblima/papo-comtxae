@@ -1,0 +1,7 @@
+- [Visão Geral](/)
+- [Planejamento](planning/MVP_EVOLUTION.md)
+- [Arquitetura](architecture/OVERVIEW.md)
+- [Stack Tecnológica](architecture/TECH_STACK.md)
+- [Modelo de Dados](database/DATA_MODEL.md)
+- [Contribuição](CONTRIBUTING.md)
+- [Primeiros Passos](GETTING_STARTED.md)
