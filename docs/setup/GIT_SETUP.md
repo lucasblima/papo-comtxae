@@ -1,4 +1,4 @@
-# Configuração do Repositório Git
+# Configuração do Repositório Git 
 
 Este guia explica como configurar o repositório Git local com o GitHub.
 

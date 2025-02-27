@@ -1,4 +1,4 @@
-# Evolução Gradual do Papo Social - Do Planejamento ao Produto
+# Evolução Gradual do Papo Social - Do Planejamento ao Produto 
 
 ## Atualização Importante: Abordagem Documentation-First 
 
