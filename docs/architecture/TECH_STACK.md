@@ -1,6 +1,6 @@
 # Stack Tecnológica
 
-## Visão Geral
+## Visão Geral 
 
 O Papo Social utiliza uma abordagem híbrida de linguagens de programação e frameworks para aproveitar os pontos fortes de cada tecnologia:
 

@@ -1,6 +1,6 @@
 # Visão Geral da Arquitetura
 
-## Estrutura do Projeto
+## Estrutura do Projeto 
 
 ```
 papo-comtxae/

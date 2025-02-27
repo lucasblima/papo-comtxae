@@ -7,7 +7,7 @@
 - Rust 1.70+ (para componentes de performance)
 - NPM ou Yarn
 
-## Configuração do Ambiente
+## Configuração do Ambiente 
 
 1. Clone o repositório:
 ```bash

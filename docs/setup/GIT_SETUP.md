@@ -15,7 +15,7 @@ Este guia explica como configurar o repositório Git local com o GitHub.
    - **NÃO** inicialize com README, .gitignore ou licença
 4. Clique em "Create repository"
 
-### 2. Conectar o repositório local ao GitHub
+### 2. Conectar o repositório local ao GitHub 
 
 Copie o URL do repositório que aparecerá nas instruções (algo como `https://github.com/seu-usuario/papo-comtxae.git`).
 
@@ -23,7 +23,7 @@ Execute os seguintes comandos no terminal (Git Bash):
 
 ```bash
 # Adicionar a origem remota
-git remote add origin https://github.com/seu-usuario/papo-comtxae.git
+git remote add origin https://github.com/lucasblima/papo-comtxae.git
 
 # Verificar se foi adicionado corretamente
 git remote -v
@@ -82,3 +82,40 @@ Se você receber erros de autenticação ao tentar fazer push:
    cat ~/.ssh/id_ed25519.pub
    ```
    - Cole a chave em GitHub > Settings > SSH and GPG keys
+
+### Erro de push rejeitado (divergência de históricos)
+
+Se você receber um erro como:
+```
+! [rejected]        main -> main (fetch first)
+error: failed to push some refs to 'https://github.com/seu-usuario/papo-comtxae.git'
+```
+
+Isso acontece quando o repositório remoto tem commits que não existem no seu repositório local. Para resolver:
+
+1. **Opção 1:** Integrar as mudanças remotas (recomendado se o repositório remoto tiver conteúdo importante):
+   ```bash
+   # Baixar as alterações do repositório remoto
+   git pull --rebase origin main
+   
+   # Depois de resolver qualquer conflito, faça o push novamente
+   git push -u origin main
+   ```
+
+2. **Opção 2:** Forçar o push (use apenas se tiver certeza que pode substituir o conteúdo remoto):
+   ```bash
+   # CUIDADO: isso sobrescreverá o histórico remoto
+   git push -f origin main
+   ```
+
+3. **Opção 3:** Se o repositório foi inicializado com README/arquivos e seu repositório local já tem histórico:
+   ```bash
+   # Unir históricos divergentes
+   git pull --allow-unrelated-histories origin main
+   
+   # Resolver conflitos se necessário e confirmar a mesclagem
+   git commit -m "Mesclando históricos inicial e local"
+   
+   # Enviar para o repositório remoto
+   git push -u origin main
+   ```

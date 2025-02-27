@@ -1,6 +1,6 @@
 # Evolução Gradual do Papo Social - Do Planejamento ao Produto
 
-## Atualização Importante: Abordagem Documentation-First
+## Atualização Importante: Abordagem Documentation-First 
 
 ```mermaid
 graph TD

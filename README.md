@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿# Papo Social
 
 Uma plataforma de comunicação inteligente com processamento de voz e orquestração de agentes de IA.
@@ -43,3 +44,6 @@ papo-comtxae/
 ## Licença
 
 Este projeto é privado e proprietário.
+=======
+# papo-comtxae
+>>>>>>> 37d72630ba46d5e38ea85bed820ac063da7c02a5

@@ -1,0 +1,31 @@
+﻿# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build
+dist/
+build/
+.next/
+
+# Environment
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Private documentation
+private_docs/
+docs/business/
+docs/**/*PRIVATE*
+docs/**/*SENSITIVE*
+docs/**/*INVESTOR*
+
+# System files
+.DS_Store
+Thumbs.db
+venv
+scripts

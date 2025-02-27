@@ -24,7 +24,7 @@ Obrigado pelo interesse em contribuir com o Papo Social! Este documento fornece 
 - Prettier e ESLint configurados
 - React/Next.js best practices
 
-### Rust (Componentes de Performance)
+### Rust (Componentes de Performance) 
 - Seguir Rust idiomático
 - rustfmt para formatação
 - clippy para lint

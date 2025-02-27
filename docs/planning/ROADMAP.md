@@ -1,6 +1,6 @@
 # Roadmap do Papo Social
 
-## Abordagem Documentation-First
+## Abordagem Documentation-First 
 
 Nossa estratégia de desenvolvimento prioriza documentação clara antes da implementação para garantir eficiência e alinhamento.
 

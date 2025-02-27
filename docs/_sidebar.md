@@ -1,4 +1,4 @@
-- [Visão Geral](/)
+- [Visão Geral ](/)
 - [Planejamento](planning/MVP_EVOLUTION.md)
 - [Arquitetura](architecture/OVERVIEW.md)
 - [Stack Tecnológica](architecture/TECH_STACK.md)

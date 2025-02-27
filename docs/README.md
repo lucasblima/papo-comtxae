@@ -25,7 +25,7 @@ graph TD
 - [Contribuição](./CONTRIBUTING.md)
 - [Primeiros Passos](./GETTING_STARTED.md)
 
-## Por que Documentation-First?
+## Por que Documentation-First? 
 
 Nossa abordagem coloca a documentação como produto central no início do desenvolvimento:
 

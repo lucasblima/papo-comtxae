@@ -62,7 +62,7 @@ Edite o arquivo `_sidebar.md` para modificar a navegação:
   - [Subitem](caminho/arquivo2.md)
 ```
 
-### Usando Diagramas Mermaid
+### Usando Diagramas Mermaid 
 
 Docsify suporta diagramas [Mermaid](https://mermaid-js.github.io/), que já estão configurados:
 
