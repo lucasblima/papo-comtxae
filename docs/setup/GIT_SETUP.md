@@ -17,7 +17,7 @@ Este guia explica como configurar o repositório Git local com o GitHub.
 
 ### 2. Conectar o repositório local ao GitHub 
 
-Copie o URL do repositório que aparecerá nas instruções (algo como `https://github.com/seu-usuario/papo-comtxae.git`).
+Copie o URL do repositório que aparecerá nas instruções (`https://github.com/lucasblima/papo-comtxae.git`).
 
 Execute os seguintes comandos no terminal (Git Bash):
 
@@ -42,7 +42,7 @@ Para publicar a documentação online:
 4. Em Source, selecione a branch "gh-pages"
 5. Clique em "Save"
 
-A documentação ficará disponível em `https://seu-usuario.github.io/papo-comtxae`.
+A documentação ficará disponível em `https://lucasblima.github.io/papo-comtxae`.
 
 ## Resolução de Problemas
 

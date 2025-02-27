@@ -1,6 +1,6 @@
-# Papo Social
+# Papo Social - Sistema de Gestão para Associação de Moradores
 
-Uma plataforma de comunicação inteligente com processamento de voz e orquestração de agentes de IA.
+Uma aplicação com interface de voz para facilitar a gestão de associações de moradores.
 
 ## Documentação
 - [Documentação Online](https://lucasblima.github.io/papo-comtxae)
@@ -12,6 +12,42 @@ O Papo Social utiliza uma arquitetura híbrida que combina:
 - **Python** (FastAPI) para a API principal e orquestração de IA com CrewAI
 - **TypeScript/Next.js** para o frontend interativo
 - **Componentes Rust** para processamento de alta performance
+
+## Configuração do Ambiente
+
+### Requisitos
+
+- Python 3.9 ou superior
+- Node.js 18 ou superior
+- MongoDB Atlas (conta já configurada)
+
+### Instalação
+
+1. **Configure o ambiente Python e instale as dependências**:
+
+   ```bash
+   python setup.py
+   ```
+
+   Este script vai:
+   - Criar um ambiente virtual Python
+   - Instalar todas as dependências do backend
+   - Verificar a configuração do frontend
+
+2. **Configure o ambiente do frontend**:
+
+   ```bash
+   node frontend_setup.js
+   ```
+
+   Este script vai:
+   - Criar a estrutura de diretórios necessária
+   - Configurar o package.json e outras configurações
+   - Instalar dependências do Next.js e React
+
+### Configuração do Banco de Dados
+
+A configuração do MongoDB Atlas já está definida no arquivo `.env`. Se necessário atualize:
 
 ## Uso Rápido (Windows)
 
@@ -43,6 +79,4 @@ papo-comtxae/
 ## Licença
 
 Este projeto é privado e proprietário.
-=======
-# papo-comtxae
->>>>>>> 37d72630ba46d5e38ea85bed820ac063da7c02a5
+````
