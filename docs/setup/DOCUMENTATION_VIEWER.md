@@ -1,174 +1,99 @@
-# Documentação Interativa - Guia de Configuração
+# Configuração do Visualizador de Documentação
 
-## Por que Documentação Visualizada?
+## Sobre o Docsify
 
-Uma documentação bem visualizada:
-- Facilita a comunicação com stakeholders
-- Permite visão holística do projeto
-- Serve como fonte única de verdade
-- Acelera onboarding de novos desenvolvedores
-- Mantém o projeto alinhado com a visão original
+O projeto Papo Social utiliza [Docsify](https://docsify.js.org/) para visualização da documentação. O Docsify é um gerador de sites de documentação minimalista, que não gera arquivos estáticos, mas carrega e analisa seus arquivos markdown sob demanda.
 
-## Opções de Visualização
+## Configuração Local
 
-### 1. Docsify (Recomendado para MVP)
+### Pré-requisitos
+- Node.js 14+ instalado
 
-Docsify é uma solução leve que não requer build, perfeito para visualização imediata.
-
-#### Instalação
+### Instalação do Docsify CLI
 
 ```bash
-# Instalar docsify-cli globalmente
-npm i docsify-cli -g
+# Instalação global do docsify-cli
+npm install -g docsify-cli
 
-# Iniciar servidor para visualização (na raiz do projeto)
+# Verificar a instalação
+docsify -v
+```
+
+### Iniciando o servidor de documentação
+
+```bash
+# A partir da raiz do projeto
 docsify serve docs
+
+# OU usando o script do projeto
+./start-project.sh
+# Depois escolha a opção 1
 ```
 
-#### Configuração
+O servidor ficará disponível em: http://localhost:3000
 
-Crie um arquivo `docs/index.html`:
+## Estrutura da Documentação
 
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Papo Social - Documentação</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
-</head>
-<body>
-  <div id="app"></div>
-  <script>
-    window.$docsify = {
-      name: 'Papo Social',
-      repo: '',
-      loadSidebar: true,
-      subMaxLevel: 3,
-      auto2top: true,
-      search: {
-        placeholder: 'Buscar',
-        noData: 'Nenhum resultado encontrado',
-        depth: 6
-      },
-      plantuml: {
-        skin: 'default',
-      },
-      mermaid: {
-        theme: 'default'
-      }
-    }
-  </script>
-  <script src="//cdn.jsdelivr.net/npm/docsify@4"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-plantuml/dist/docsify-plantuml.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-mermaid@1.0.0/dist/docsify-mermaid.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
-</body>
-</html>
+```
+docs/
+├── index.html               # Configuração do Docsify
+├── README.md                # Página inicial
+├── _sidebar.md              # Barra lateral de navegação
+├── planning/                # Documentação de planejamento
+│   └── MVP_EVOLUTION.md
+├── architecture/            # Detalhes arquiteturais
+│   └── OVERVIEW.md
+│   └── TECH_STACK.md
+├── database/                # Modelagem de dados
+│   └── DATA_MODEL.md
+├── CONTRIBUTING.md          # Guia de contribuição
+└── GETTING_STARTED.md       # Como iniciar com o projeto
 ```
 
-Crie também um arquivo `docs/_sidebar.md`:
+## Personalização
+
+### Alterando a Barra Lateral
+
+Edite o arquivo `_sidebar.md` para modificar a navegação:
 
 ```markdown
-* [Início](/)
-* Arquitetura
-  * [Stack Tecnológico](architecture/TECH_STACK.md)
-  * [Estrutura do Projeto](architecture/PROJECT_STRUCTURE.md)
-* Planejamento
-  * [Evolução do MVP](planning/MVP_EVOLUTION.md)
-  * [Modelagem de Dados](database/DATA_MODEL.md)
-* Setup
-  * [Visualização da Documentação](setup/DOCUMENTATION_VIEWER.md)
+- [Link para Seção](caminho/arquivo.md)
+- [Grupo]
+  - [Subitem](caminho/arquivo2.md)
 ```
 
-### 2. MkDocs (Para Documentação Mais Estruturada)
+### Usando Diagramas Mermaid
 
-Alternativa robusta quando o projeto crescer.
+Docsify suporta diagramas [Mermaid](https://mermaid-js.github.io/), que já estão configurados:
 
-#### Instalação
-
-```bash
-# Instalar MkDocs e tema Material
-pip install mkdocs mkdocs-material
-
-# Iniciar servidor local
-mkdocs serve
+```markdown
+```mermaid
+graph TD
+    A[Cliente] -->|Requisição| B[Servidor]
+    B -->|Resposta| A
+```
 ```
 
-#### Configuração
+## GitHub Pages
 
-Criar arquivo `mkdocs.yml` na raiz:
+Nossa documentação é automaticamente publicada em GitHub Pages usando GitHub Actions:
 
-```yaml
-site_name: Papo Social Documentação
-theme:
-  name: material
-  features:
-    - navigation.tabs
-    - navigation.sections
-    - toc.integrate
-    - search.suggest
-  palette:
-    - scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/toggle-switch
-        name: Modo escuro
-    - scheme: slate
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/toggle-switch-off-outline
-        name: Modo claro
+1. Ao fazer push para a branch `main`
+2. O workflow `.github/workflows/docs.yml` é acionado
+3. A documentação é copiada para a branch `gh-pages`
+4. Fica disponível em `https://seu-usuario.github.io/papo-comtxae`
 
-markdown_extensions:
-  - pymdownx.highlight
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
-  - pymdownx.tasklist
-  - pymdownx.emoji
+## Troubleshooting
 
-nav:
-  - Início: index.md
-  - Arquitetura:
-    - Stack Tecnológico: architecture/TECH_STACK.md
-    - Estrutura do Projeto: architecture/PROJECT_STRUCTURE.md
-  - Planejamento:
-    - Evolução do MVP: planning/MVP_EVOLUTION.md
-    - Modelagem de Dados: database/DATA_MODEL.md
-  - Setup:
-    - Visualização da Documentação: setup/DOCUMENTATION_VIEWER.md
-```
+### Problema: Alterações não aparecem
 
-### 3. Solução Rápida (VSCode)
+**Solução**: Tente:
+- Limpar o cache do navegador
+- Reiniciar o servidor docsify
+- Verificar se os arquivos foram salvos
 
-Para visualização rápida individual:
+### Problema: Mermaid não renderiza
 
-1. Instale a extensão "Markdown Preview Enhanced" no VSCode
-2. Abra qualquer arquivo markdown
-3. Pressione `Ctrl+K V` (ou `Cmd+K V` no Mac)
-4. A visualização aparecerá lado a lado
-
-## Recomendação para Apresentações
-
-Para apresentar a stakeholders:
-1. Configure o Docsify (opção mais rápida)
-2. Hospede temporariamente no GitHub Pages ou Netlify (gratuito)
-3. Compartilhe o link com os interessados
-
-Isso permite acesso fácil sem instalação local para investidores e outros stakeholders.
-
-## Próximos Passos
-
-1. Escolha uma das soluções acima
-2. Configure o ambiente de visualização
-3. Organize a documentação existente
-4. Compartilhe com a equipe e stakeholders
-5. Mantenha documentação e código sincronizados
+**Solução**: Verifique:
+- Sintaxe do diagrama
+- Se há espaços extras antes dos blocos de código

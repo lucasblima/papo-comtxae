@@ -3,5 +3,9 @@
 - [Arquitetura](architecture/OVERVIEW.md)
 - [Stack Tecnológica](architecture/TECH_STACK.md)
 - [Modelo de Dados](database/DATA_MODEL.md)
-- [Contribuição](CONTRIBUTING.md)
-- [Primeiros Passos](GETTING_STARTED.md)
+- [Guias]
+  - [Contribuição](CONTRIBUTING.md)
+  - [Primeiros Passos](GETTING_STARTED.md)
+- [Setup]
+  - [Documentação](setup/DOCUMENTATION_VIEWER.md)
+  - [Configuração Git](setup/GIT_SETUP.md)

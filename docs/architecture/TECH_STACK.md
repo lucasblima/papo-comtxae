@@ -1,98 +1,139 @@
-# Stack Tecnológico do Papo Social
+# Stack Tecnológica
 
-## 1. Core Backend (Python + Rust)
+## Visão Geral
 
-### Python Layer (Primary)
-- FastAPI para API principal
-- CrewAI para orquestração de agentes
-- Pydantic para validação de dados
-- asyncio para operações assíncronas
+O Papo Social utiliza uma abordagem híbrida de linguagens de programação e frameworks para aproveitar os pontos fortes de cada tecnologia:
 
-### Rust Layer (Performance Critical)
-- Microserviços em Axum para componentes críticos
-- Processamento de áudio e voz
-- Cache e operações de baixa latência
-- Integração via gRPC/tonic
+1. **Python**: Orquestração de IA, lógica principal de backend
+2. **TypeScript/JavaScript**: Interface de usuário e interações
+3. **Rust**: Componentes críticos e processamento de alta performance
 
-## 2. Processamento de Voz (Hybrid)
+Esta combinação nos permite um desenvolvimento rápido e flexível, mantendo alta performance em áreas críticas.
 
-### Python Components
-- OpenAI Whisper para reconhecimento principal
-- Transformers para processamento de linguagem
-- CrewAI para orquestração de agentes de voz
+## Stack por Camada
 
-### Rust Components
-- whisper-rs para processamento local quando necessário
-- cpal para manipulação de áudio de baixa latência
-- Ponte PyO3 para integração Python/Rust
+### Frontend
 
-## 3. Estado e Cache
+| Tecnologia | Função | Justificativa |
+|------------|--------|---------------|
+| Next.js 14+ | Framework React | SSR, rotas, optimizações automáticas |
+| TypeScript | Linguagem | Tipagem, escalabilidade, DX |
+| Tailwind CSS | Estilização | Desenvolvimento rápido, consistência |
+| SWR | Gerenciamento de estado/cache | Stale-while-revalidate para UX fluida |
+| WebAssembly | Processamento no cliente | Performance nativa para áudio/voz |
+| Web Speech API | Entrada/saída de voz | API nativa para reconhecimento inicial |
 
-### Principal (Python)
-- Redis para estado distribuído
-- PostgreSQL para dados persistentes
-- SQLAlchemy para ORM
+### Backend
 
-### Performance Layer (Rust)
-- sled para cache local de alta performance
-- fred para operações Redis críticas
+| Tecnologia | Função | Justificativa |
+|------------|--------|---------------|
+| FastAPI | Framework Python | Alto desempenho, tipagem, doc automática |
+| CrewAI | Orquestração de agentes | Framework para agentes autônomos |
+| Pydantic | Validação de dados | Integração nativa com FastAPI |
+| MongoDB | Banco de dados principal | Flexibilidade de schema, escalabilidade |
+| SQLite (MVP inicial) | Armazenamento inicial | Simplicidade, zero configuração |
 
-## 4. Frontend
+### Componentes Críticos (Rust)
 
-### Web (Primary)
-- Next.js para interface principal
-- React para componentes
-- TailwindCSS para estilização
+| Tecnologia | Função | Justificativa |
+|------------|--------|---------------|
+| Rust | Linguagem | Performance, segurança de memória |
+| Tokio | Runtime assíncrono | Manipulação eficiente de I/O |
+| WebAssembly | Compilação para web | Execução no navegador sem perda de performance |
+| Actix-web | APIs em Rust | Exposição de serviços Rust quando necessário |
 
-### Performance Components
-- WebAssembly (Rust) para processamento pesado no cliente
-- Yew para componentes específicos de alta performance
+## Abordagem Híbrida Python-Rust
 
-## 5. IA e ML
+Nossa arquitetura integra Python e Rust através de:
 
-### Core ML (Python)
-- CrewAI como framework principal
-- Transformers/HuggingFace
-- LangChain para componentes específicos
-- ChromaDB para vector store
+1. **PyO3**: Bindings Python/Rust para funções críticas
+2. **Processos separados**: Comunicação via IPC para isolamento
+3. **Microserviços**: APIs Rust específicas para componentes críticos
 
-### Performance Optimization (Rust)
-- onnxruntime-rs para inferência otimizada
-- PyO3 para extensões de performance crítica
-
-## Justificativa da Arquitetura Híbrida
-
-1. **Porque não full Rust:**
-- CrewAI e ecossistema de IA são primariamente Python
-- Desenvolvimento mais rápido em Python
-- Maior disponibilidade de desenvolvedores Python
-
-2. **Porque não full Python:**
-- Necessidade de performance em componentes críticos
-- Processamento de áudio requer baixa latência
-- Operações de cache precisam ser extremamente rápidas
-
-3. **Benefícios da Abordagem Híbrida:**
-- Melhor dos dois mundos
-- Flexibilidade para otimizar pontos críticos
-- Manutenção da velocidade de desenvolvimento
-- Escalabilidade onde necessário
-
-## Pipeline de Integração
-
-1. **Fluxo Padrão**
-```
-[Client] → [Next.js] → [FastAPI/CrewAI] → [DB/Cache]
+```mermaid
+graph TD
+    A[Cliente Web/Mobile] -->|Next.js| B[Frontend]
+    B -->|API| C[FastAPI Python]
+    C -->|JSON/REST| D[CrewAI]
+    C -->|PyO3| E[Componentes Rust]
+    C -->|Persistência| F[MongoDB]
+    D -->|Orquestração| G[Agentes IA]
+    E -->|Performance| H[Processamento Áudio]
+    
+    style E fill:#dce775,stroke:#827717
+    style H fill:#dce775,stroke:#827717
 ```
 
-2. **Fluxo de Performance**
-```
-[Client] → [Rust WASM] → [Rust Service] → [sled/Redis]
-```
+## Decisões e Trade-offs
 
-3. **Processamento de Voz**
-```
-[Audio] → [Rust Processor] → [Whisper Python] → [CrewAI]
-```
+### Por que FastAPI e não Flask/Django?
 
-Esta arquitetura permite crescimento orgânico, onde podemos começar com componentes Python e gradualmente otimizar com Rust conforme necessário.
+FastAPI oferece:
+- Performance próxima de Node.js/Go
+- Validação automática de dados via Pydantic
+- Documentação OpenAPI automática
+- Suporte nativo a tarefas assíncronas
+
+### Por que Next.js e não SvelteKit/Vue?
+
+Next.js oferece:
+- Ecossistema React maduro
+- SSR otimizado
+- Facilidade de build para produção
+- App Router para organização lógica
+
+### Por que componentes Rust?
+
+Componentes específicos em Rust para:
+- Processamento de áudio com latência mínima
+- Algoritmos de alto desempenho
+- Trabalho com memória de forma eficiente
+- Compilação para WebAssembly quando necessário
+
+### Por que MongoDB inicialmente?
+
+- Schema flexível para iteração rápida
+- Fácil modelagem de dados hierárquicos (conversas, mensagens)
+- MongoDB Atlas com tier gratuito para MVP
+- Performance adequada para cargas iniciais
+
+## Ferramentas de Desenvolvimento
+
+| Categoria | Ferramentas |
+|-----------|-------------|
+| Linting/Formatação | ESLint, Prettier, Black, Rustfmt |
+| CI/CD | GitHub Actions |
+| Teste | Jest, pytest, Rust test framework |
+| Documentação | Docsify, TypeDoc, Pydoc, Rustdoc |
+| Monitoramento | Prometheus, Grafana (futuro) |
+
+## Evolução do Stack
+
+### MVP1: Base Sólida
+- FastAPI + MongoDB + Next.js
+- Sem componentes Rust iniciais
+- Processamento de áudio via Web APIs
+
+### MVP2: Introdução de Performance
+- Primeiros componentes Rust para processamento de áudio
+- Exportação para WebAssembly
+- Integração via PyO3 para backend
+
+### MVP3: Escalabilidade
+- Cluster MongoDB completo
+- Otimização de componentes críticos em Rust
+- Pipeline de áudio completa em Rust/WASM
+
+## Requisitos de Ambiente
+
+### Desenvolvimento
+- Node.js 18+
+- Python 3.9+
+- Rust 1.70+ (quando necessário)
+- MongoDB local ou Atlas
+
+### Produção
+- Servidor Linux (Ubuntu LTS recomendado)
+- 2+ CPUs, 4GB+ RAM
+- MongoDB Atlas ou cluster gerenciado
+- Armazenamento apropriado para áudio
