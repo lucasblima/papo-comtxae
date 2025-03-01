@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import Head from 'next/head';
-import VoiceInput from '../components/VoiceInput';
+import VoiceInput from '../src/components/VoiceInput';
 import axios from 'axios';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -48,14 +48,14 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Head>
-        <title>Papo Social - Associação de Moradores</title>
+        <title>Papo Social</title>
         <meta name="description" content="Sistema para gestão de associação de moradores" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
-          Papo Social - Associação de Moradores
+          Papo Social
         </h1>
         
         <div className="bg-white p-6 rounded-lg shadow-md">

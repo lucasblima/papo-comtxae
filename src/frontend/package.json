@@ -3,24 +3,45 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3000",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "clean": "rimraf .next src/app",
+    "clean:all": "rimraf .next node_modules/.cache",
+    "reset": "powershell -ExecutionPolicy Bypass -File ./reset-frontend.ps1",
+    "check-routes": "node check-routes.js",
+    "check-routes:esm": "node check-routes-esm.mjs",
+    "refresh": "npm run clean && npm run build && npm run dev",
+    "static-check": "node static-check.js",
+    "dev:clean": "npm run kill-ports && rimraf .next && next dev",
+    "dev:force": "NODE_OPTIONS='--inspect' next dev",
+    "dev:debug": "cross-env NODE_OPTIONS='--inspect' next dev",
+    "dev:alt": "next dev --port 3001",
+    "kill-ports": "powershell -ExecutionPolicy Bypass -File ./kill-ports.ps1",
+    "dev:fresh": "npm run kill-ports && npm run clean && npm run dev"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.1.2",
     "axios": "^1.6.0",
-    "framer-motion": "^12.4.7",
-    "gsap": "^3.12.7",
+    "chalk": "^5.4.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.292.0",
     "next": "^14.0.0",
+    "next-themes": "^0.4.4",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0",
-    "tailwindcss": "^3.3.0",
+    "autoprefixer": "^10.4.20",
+    "cross-env": "^7.0.3",
+    "postcss": "^8.5.3",
+    "rimraf": "^5.0.5",
+    "tailwindcss": "^3.4.17",
     "typescript": "^5.0.0"
   }
 }

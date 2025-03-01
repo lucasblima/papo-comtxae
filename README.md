@@ -2,6 +2,8 @@
 
 Uma aplicação com interface de voz para facilitar a gestão de associações de moradores.
 
+## Estrutura do Projeto
+```
 ## Documentação
 - [Documentação Online](https://lucasblima.github.io/papo-comtxae)
 - [Documentação Local](./docs/README.md)

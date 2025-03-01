@@ -3,18 +3,9 @@ import asyncio
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
-from pathlib import Path
-
-# Encontrar o arquivo .env no diretório backend
-backend_dir = Path(__file__).parent.parent
-env_path = backend_dir / '.env'
 
 # Carregar variáveis de ambiente do arquivo .env
-load_dotenv(dotenv_path=env_path)
-
-# Debug: imprimir informações sobre o carregamento do .env
-print(f"[DEBUG] Procurando .env em: {env_path}")
-print(f"[DEBUG] MONGODB_URL carregada: {os.getenv('MONGODB_URL', 'não encontrada')}")
+load_dotenv()
 
 # Configurações da conexão MongoDB
 MONGODB_URL = os.getenv("MONGODB_URL")
