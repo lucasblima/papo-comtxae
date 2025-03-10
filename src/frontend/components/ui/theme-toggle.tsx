@@ -1,20 +1,19 @@
-import { useTheme } from "next-themes";
-import { Moon, Sun } from "lucide-react";
+import { FaMoon, FaSun } from "react-icons/fa"
+import { Button } from "./button"
+import { useTheme } from "next-themes"
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme()
 
   return (
-    <label className="swap swap-rotate">
-      <input 
-        type="checkbox" 
-        className="theme-controller" 
-        value="dim"
-        checked={theme === 'dark'}
-        onChange={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-      />
-      <Sun className="swap-on h-6 w-6 fill-current" />
-      <Moon className="swap-off h-6 w-6 fill-current" />
-    </label>
-  );
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    >
+      <FaSun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+      <FaMoon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  )
 } 

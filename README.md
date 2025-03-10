@@ -1,9 +1,88 @@
-# Papo Social - Sistema de Gestão para Associação de Moradores
+# Papo Social
 
-Uma aplicação com interface de voz para facilitar a gestão de associações de moradores.
+Aplicação de rede social com assistente de voz integrado.
+
+## Requisitos
+
+- Node.js 18+
+- Python 3.9+
+- MongoDB
 
 ## Estrutura do Projeto
+
+- `src/frontend`: Aplicação Next.js/React com DaisyUI
+- `src/backend`: API FastAPI conectada ao MongoDB
+
+## Configuração
+
+### Backend
+
+1. Copie o arquivo de exemplo de variáveis de ambiente:
+   ```
+   cd src/backend
+   cp .env.example .env
+   ```
+
+2. Edite o arquivo `.env` com suas credenciais do MongoDB:
+   ```
+   MONGODB_URL=mongodb+srv://seu_usuario:sua_senha@seu_cluster.mongodb.net/seu_database?retryWrites=true&w=majority
+   MONGODB_DB_NAME=papo_social_db
+   PORT=8000
+   ```
+
+3. Instale as dependências:
+   ```
+   pip install -r requirements.txt
+   ```
+
+### Frontend
+
+1. Instale as dependências:
+   ```
+   cd src/frontend
+   npm install
+   ```
+
+## Executando o Projeto
+
+### Ambos (Frontend e Backend)
+
 ```
+npm run dev
+```
+
+### Apenas Frontend
+
+```
+npm run dev:frontend
+```
+
+### Apenas Backend
+
+```
+npm run dev:backend
+```
+
+## Testes
+
+### Executar todos os testes
+
+```
+npm run test
+```
+
+### Apenas testes do Frontend
+
+```
+npm run test:frontend
+```
+
+### Apenas testes do Backend
+
+```
+npm run test:backend
+```
+
 ## Documentação
 - [Documentação Online](https://lucasblima.github.io/papo-comtxae)
 - [Documentação Local](./docs/README.md)
@@ -81,4 +160,3 @@ papo-comtxae/
 ## Licença
 
 Este projeto é privado e proprietário.
-````

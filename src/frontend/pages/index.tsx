@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import VoiceInput from '../src/components/VoiceInput';
 import axios from 'axios';
-import { ThemeToggle } from '../components/ui/theme-toggle';
+import { ThemeToggle } from '../components/ui';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 

@@ -2,11 +2,9 @@
 
 import React from 'react';
 import { useState } from 'react'
-import { SpeechToText } from '../../components/speech/speech-to-text'
-import { TextToSpeech } from '../../components/speech/text-to-speech'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card'
-import { Button } from '../../components/ui/button'
-import { VolumeIcon, MicIcon } from 'lucide-react'
+import { SpeechToText, TextToSpeech } from '../src/components/speech'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button } from '../components/ui'
+import { FaVolumeUp, FaMicrophone } from 'react-icons/fa'
 
 export default function VoiceDemoPage() {
   const [transcript, setTranscript] = useState('')
@@ -79,7 +77,7 @@ export default function VoiceDemoPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <VolumeIcon className="h-5 w-5" />
+                <FaVolumeUp className="h-5 w-5" />
                 Texto para Fala
               </CardTitle>
               <CardDescription>
@@ -117,7 +115,7 @@ export default function VoiceDemoPage() {
                 className="flex items-center gap-2"
                 disabled={!exampleText || isSpeaking}
               >
-                <VolumeIcon className="h-4 w-4" />
+                <FaVolumeUp className="h-4 w-4" />
                 {isSpeaking ? "Falando..." : "Falar Texto"}
               </Button>
             </CardContent>

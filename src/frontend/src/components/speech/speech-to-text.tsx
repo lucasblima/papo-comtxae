@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '../ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card'
-import { MicIcon, StopCircleIcon, VolumeIcon } from 'lucide-react'
+import { FaMicrophone, FaStopCircle, FaVolumeUp } from 'react-icons/fa'
 
 interface SpeechToTextProps {
   onTranscript: (text: string) => void
@@ -164,7 +164,7 @@ export function SpeechToTextComponent({
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <VolumeIcon className="h-5 w-5" />
+          <FaVolumeUp className="h-5 w-5" />
           Reconhecimento de Voz
         </CardTitle>
         <CardDescription>
@@ -199,12 +199,12 @@ export function SpeechToTextComponent({
           >
             {isListening ? (
               <>
-                <StopCircleIcon className="h-4 w-4" />
+                <FaStopCircle className="h-4 w-4" />
                 Parar
               </>
             ) : (
               <>
-                <MicIcon className="h-4 w-4" />
+                <FaMicrophone className="h-4 w-4" />
                 Começar a Escutar
               </>
             )}

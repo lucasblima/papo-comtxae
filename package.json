@@ -13,9 +13,11 @@
     "start": "cd src/frontend && npm start",
     "install:all": "npm run install:frontend && npm run install:backend",
     "install:frontend": "cd src/frontend && npm install",
-    "install:backend": "cd src/backend && pip install -r requirements.txt"
+    "install:backend": "cd src/backend && pip install -r requirements.txt",
+    "verify": "node scripts/verify-setup.js"
   },
   "devDependencies": {
+    "chalk": "^4.1.2",
     "concurrently": "^8.0.0"
   }
 } 
