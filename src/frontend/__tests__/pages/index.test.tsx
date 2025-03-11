@@ -14,10 +14,10 @@ jest.mock('next/head', () => {
 });
 
 // Mock VoiceInput component
-jest.mock('../../src/components/VoiceInput', () => {
+jest.mock('../../components/speech/VoiceInput', () => {
   return {
     __esModule: true,
-    default: ({ onResult, onProcessing }: any) => (
+    VoiceInput: ({ onResult, onProcessing }: any) => (
       <button data-testid="voice-input-button">Falar</button>
     ),
   };
@@ -44,8 +44,10 @@ describe('Home page', () => {
 
   it('renders the page title', () => {
     renderWithTheme(<Home />);
-    const titleElement = screen.getByText('Papo Social');
+    // Instead of checking for specific text, just verify that the head title renders
+    const titleElement = document.querySelector('title');
     expect(titleElement).toBeInTheDocument();
+    expect(titleElement?.textContent).toContain('Papo Social');
   });
 
   it('renders the voice assistant card title', () => {

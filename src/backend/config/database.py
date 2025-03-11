@@ -1,7 +1,7 @@
 import os
 import asyncio
 from typing import Optional
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente do arquivo .env
@@ -37,14 +37,23 @@ async def close_mongo_connection():
         client.close()
         print("Conexão com MongoDB encerrada.")
 
-# Coleções do banco de dados
-@property
-def database():
+async def get_database() -> AsyncIOMotorDatabase:
+    """Get database instance."""
+    if not client:
+        await connect_to_mongo()
     return client[DB_NAME]
 
-# Definir coleções
-residents_collection = property(lambda: client[DB_NAME]["residents"])
-requests_collection = property(lambda: client[DB_NAME]["requests"])
+async def get_collection(collection_name: str):
+    """Get collection from database."""
+    db = await get_database()
+    return db[collection_name]
+
+# Export collections as async functions
+async def get_residents_collection():
+    return await get_collection("residents")
+
+async def get_requests_collection():
+    return await get_collection("requests")
 
 if __name__ == "__main__":
     print("[INFO] Testando conexão com MongoDB...")

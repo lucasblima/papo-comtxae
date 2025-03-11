@@ -1,36 +1,51 @@
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import VoiceInput from '../../src/components/VoiceInput';
+import { VoiceInput } from '../../components/speech/VoiceInput';
 
-// Mock da Web Speech API
-jest.mock('../../src/components/VoiceInput', () => {
-  return function MockVoiceInput({ onResult, onProcessing }: any) {
-    return (
-      <div className="voice-input mt-4">
-        <div className="flex flex-col items-center gap-4">
-          <button 
-            className="btn btn-circle btn-lg btn-primary"
-            data-testid="voice-input-button"
-          >
-            Falar
-          </button>
-          <div className="collapse bg-base-200 w-full max-w-xs">
-            <input type="checkbox" data-testid="voice-help-toggle" /> 
-            <div className="collapse-title text-sm font-medium">
-              Como usar o comando de voz?
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-});
+// Define types for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+    AudioContext: any;
+    webkitAudioContext: any;
+    SpeechSynthesisUtterance: any;
+    speechSynthesis: any;
+  }
+}
+
+// Mock the Web Speech API
+const mockSpeechRecognition = {
+  start: jest.fn(),
+  abort: jest.fn(),
+  stop: jest.fn(),
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+};
+
+// Mock required components
+jest.mock('../../components/speech/VoiceInput/EnhancedVoiceButton', () => ({
+  EnhancedVoiceButton: ({ onClick, isListening, isProcessing }: any) => (
+    <button 
+      data-testid="voice-input-button"
+      onClick={onClick} 
+      disabled={isProcessing}
+      data-listening={isListening}
+    >
+      Falar
+    </button>
+  ),
+}));
 
 describe('VoiceInput Component', () => {
   const mockOnResult = jest.fn();
   const mockOnProcessing = jest.fn();
 
   beforeEach(() => {
+    // Setup mocks
+    (global as any).SpeechRecognition = jest.fn().mockImplementation(() => mockSpeechRecognition);
+    (global as any).webkitSpeechRecognition = jest.fn().mockImplementation(() => mockSpeechRecognition);
+    
     jest.clearAllMocks();
   });
 

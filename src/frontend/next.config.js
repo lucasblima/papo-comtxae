@@ -2,9 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  poweredByHeader: false,
   images: {
-    // Se você remover output: 'export', também pode remover esta linha
-    // unoptimized: true,
+    domains: [],
+    formats: ['image/avif', 'image/webp'],
+  },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  experimental: {
+    optimizeCss: true,
   },
 }
 

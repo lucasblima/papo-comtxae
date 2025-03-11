@@ -1,8 +1,12 @@
+import React from 'react';
 import { useState } from 'react';
 import Head from 'next/head';
 import VoiceInput from '../src/components/VoiceInput';
 import axios from 'axios';
 import { ThemeToggle } from '../components/ui';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
+import { VoiceVisualization } from '../components/VoiceInput/VoiceVisualization';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -12,6 +16,7 @@ export default function Home() {
   const [response, setResponse] = useState<any>(null);
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("voice"); // New state for tabs
 
   // Processar resultado do reconhecimento de voz
   const handleVoiceResult = async (text: string) => {
@@ -47,10 +52,10 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-base-200" data-theme="dim">
       <Head>
-        <title>Papo Social</title>
-        <meta name="description" content="Sistema para gestão de associação de moradores" />
+        <title>Papo Social - Conectando comunidades através da voz</title>
+        <meta name="description" content="Papo Social: uma plataforma para conectar comunidades através de interações por voz e contribuições coletivas." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -69,122 +74,123 @@ export default function Home() {
               <li><a>Solicitações</a></li>
             </ul>
           </div>
-          <a className="btn btn-ghost text-xl">Papo Social</a>
+          <a className="btn btn-ghost text-xl">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4v-4z" />
+            </svg>
+            Papo Social
+          </a>
         </div>
         <div className="navbar-center hidden lg:flex">
           <ul className="menu menu-horizontal px-1">
-            <li><a>Início</a></li>
-            <li><a>Moradores</a></li>
-            <li><a>Solicitações</a></li>
+            <li><a className="btn btn-ghost btn-sm">Início</a></li>
+            <li><a className="btn btn-ghost btn-sm">Moradores</a></li>
+            <li><a className="btn btn-ghost btn-sm">Solicitações</a></li>
           </ul>
         </div>
         <div className="navbar-end">
+          <div className="dropdown dropdown-end mr-2">
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar placeholder">
+              <div className="bg-neutral text-neutral-content rounded-full w-10">
+                <span>U</span>
+              </div>
+            </div>
+            <ul tabIndex={0} className="menu dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+              <li><a>Perfil</a></li>
+              <li><a>Configurações</a></li>
+              <li><a>Sair</a></li>
+            </ul>
+          </div>
           <ThemeToggle />
         </div>
       </div>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Hero Section */}
-        <div className="hero bg-base-100 rounded-lg shadow-xl mb-8 p-6">
-          <div className="hero-content text-center">
-            <div className="max-w-md">
-              <h1 className="text-5xl font-bold">Bem-vindo ao Papo Social</h1>
-              <p className="py-6">Seu assistente virtual para gestão da associação de moradores. Use comandos de voz para interagir com o sistema.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Voice Assistant Card */}
-        <div className="card bg-base-100 shadow-xl mb-8">
-          <div className="card-body">
-            <h2 className="card-title text-2xl flex items-center gap-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-              </svg>
-              Assistente por Voz
-            </h2>
-            
-            <div className="divider"></div>
-            
-            <div className="bg-base-200 p-4 rounded-lg">
-              <p className="text-base-content">
-                Experimente usar comandos como:
+        <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-base-200 to-base-100">
+          <div className="max-w-3xl w-full text-center">
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+            >
+              <h1 className="text-4xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                Papo Social
+              </h1>
+              <p className="text-xl md:text-2xl mb-8">
+                Conectando comunidades através da voz
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="badge badge-primary">"listar moradores"</span>
-                <span className="badge badge-secondary">"nova solicitação"</span>
-                <span className="badge badge-accent">"agendar reunião"</span>
-              </div>
-            </div>
+            </motion.div>
             
-            <VoiceInput 
-              onResult={handleVoiceResult}
-              onProcessing={setIsProcessing}
-            />
+            <motion.div 
+              className="mb-12"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <VoiceVisualization isListening={true} amplitude={0.5} size="lg" color="#6366F1" />
+            </motion.div>
             
-            {voiceText && (
-              <div className="alert alert-info shadow-lg mt-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-current shrink-0 w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <div>
-                  <h3 className="font-bold">Comando Recebido</h3>
-                  <div className="text-xs">{voiceText}</div>
+            <motion.div
+              className="space-y-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.8 }}
+            >
+              <div className="max-w-2xl mx-auto">
+                <p className="text-lg mb-8">
+                  Uma plataforma inovadora que usa interação por voz para facilitar a comunicação e colaboração em comunidades, desde associações de moradores até projetos sociais.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Link href="/onboarding" className="btn btn-primary btn-lg">
+                    Começar agora
+                  </Link>
+                  <Link href="/about" className="btn btn-outline btn-lg">
+                    Saiba mais
+                  </Link>
                 </div>
               </div>
-            )}
-            
-            {loading && (
-              <div className="flex flex-col items-center justify-center mt-4">
-                <span className="loading loading-spinner loading-lg text-primary"></span>
-                <p className="mt-2">Processando sua solicitação...</p>
+              
+              <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <motion.div 
+                  className="card bg-base-200 shadow-lg"
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                >
+                  <div className="card-body">
+                    <h3 className="card-title text-primary">Interação por Voz</h3>
+                    <p>Comunicação natural e acessível através de comandos de voz em português brasileiro.</p>
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="card bg-base-200 shadow-lg"
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                >
+                  <div className="card-body">
+                    <h3 className="card-title text-secondary">Engajamento Comunitário</h3>
+                    <p>Conecte-se com sua comunidade, participe de discussões e contribua para melhorias coletivas.</p>
+                  </div>
+                </motion.div>
+                
+                <motion.div 
+                  className="card bg-base-200 shadow-lg"
+                  whileHover={{ y: -5, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
+                >
+                  <div className="card-body">
+                    <h3 className="card-title text-accent">Experiência Gamificada</h3>
+                    <p>Conquiste níveis, desbloqueie conquistas e receba reconhecimento por suas contribuições.</p>
+                  </div>
+                </motion.div>
               </div>
-            )}
+              
+              <div className="mt-12 text-center">
+                <p className="text-base-content/70">
+                  Parceiros: Cruz Vermelha RJ, Miss Brasil 2024, Comunidades Indígenas da Amazônia
+                </p>
+              </div>
+            </motion.div>
           </div>
         </div>
-
-        {/* Residents Table Card */}
-        {residents.length > 0 && (
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h3 className="card-title text-2xl mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Lista de Moradores
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="table table-zebra w-full">
-                  <thead>
-                    <tr>
-                      <th>Nome</th>
-                      <th>Unidade</th>
-                      <th>Contato</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {residents.map((resident: any) => (
-                      <tr key={resident._id}>
-                        <td>{resident.name}</td>
-                        <td>
-                          <div className="badge badge-ghost">{resident.unit_number}</div>
-                        </td>
-                        <td>{resident.phone}</td>
-                        <td>
-                          <div className="flex gap-2">
-                            <button className="btn btn-xs btn-info">Ver</button>
-                            <button className="btn btn-xs btn-warning">Editar</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
 
       {/* Footer */}
@@ -195,11 +201,28 @@ export default function Home() {
           </p> 
           <p>Copyright © 2024 - Todos os direitos reservados</p>
         </div> 
+        <div className="grid grid-flow-col gap-4">
+          <a className="link link-hover">Sobre</a> 
+          <a className="link link-hover">Contato</a> 
+          <a className="link link-hover">Ajuda</a>
+        </div>
         <div>
           <div className="grid grid-flow-col gap-4">
-            <a className="link link-hover">Sobre</a> 
-            <a className="link link-hover">Contato</a> 
-            <a className="link link-hover">Ajuda</a>
+            <a className="btn btn-ghost btn-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="fill-current">
+                <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path>
+              </svg>
+            </a> 
+            <a className="btn btn-ghost btn-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="fill-current">
+                <path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path>
+              </svg>
+            </a> 
+            <a className="btn btn-ghost btn-circle">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="fill-current">
+                <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"></path>
+              </svg>
+            </a>
           </div>
         </div>
       </footer>

@@ -65,7 +65,7 @@ describe('Theme Integration Test', () => {
     );
     
     // Encontrar o botão de alternar tema
-    const themeToggle = screen.getByRole('checkbox');
+    const themeToggle = screen.getByRole('button', { name: 'Toggle theme' });
     expect(themeToggle).toBeInTheDocument();
     
     // Clicar no botão de tema

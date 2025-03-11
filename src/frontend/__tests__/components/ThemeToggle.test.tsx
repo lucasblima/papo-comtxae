@@ -23,7 +23,7 @@ describe('ThemeToggle Component', () => {
       </ThemeProvider>
     );
     
-    const themeToggle = screen.getByRole('checkbox');
+    const themeToggle = screen.getByRole('button');
     expect(themeToggle).toBeInTheDocument();
   });
 
@@ -42,7 +42,7 @@ describe('ThemeToggle Component', () => {
       </ThemeProvider>
     );
     
-    const themeToggle = screen.getByRole('checkbox');
+    const themeToggle = screen.getByRole('button');
     fireEvent.click(themeToggle);
     
     expect(mockSetTheme).toHaveBeenCalledWith('dark');

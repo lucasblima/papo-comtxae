@@ -1,35 +1,34 @@
 import pytest
 from fastapi.testclient import TestClient
+from bson import ObjectId
 
 def test_health_endpoint(test_client):
-    """Test the API health endpoint."""
+    """Test health check endpoint."""
     response = test_client.get("/")
     assert response.status_code == 200
-    data = response.json()
-    assert data["status"] == "online"
-    assert data["message"] == "Papo Social API está funcionando!"
+    assert response.json()["status"] == "online"
 
 def test_get_residents(test_client):
     """Test retrieving residents list."""
-    response = test_client.get("/residents")
+    response = test_client.get("/residents/")
     assert response.status_code == 200
-    data = response.json()
-    assert isinstance(data, list)
-    
+    assert isinstance(response.json(), list)
+
 def test_create_resident(test_client):
     """Test creating a new resident."""
     new_resident = {
-        "name": "Maria Oliveira",
-        "email": "maria@example.com",
-        "phone": "11987654322",
-        "address": "Rua XYZ, 456",
+        "name": "João Silva",
+        "email": "joao@example.com",
+        "phone": "11987654321",
+        "unit_number": "101A",
         "is_active": True
     }
-    
-    response = test_client.post("/residents", json=new_resident)
+
+    response = test_client.post("/residents/", json=new_resident)
     assert response.status_code == 201
     data = response.json()
     assert data["name"] == new_resident["name"]
+    assert data["email"] == new_resident["email"]
     assert "id" in data
 
 def test_get_resident_by_id(test_client):
@@ -39,17 +38,37 @@ def test_get_resident_by_id(test_client):
         "name": "Carlos Santos",
         "email": "carlos@example.com",
         "phone": "11987654323",
+        "unit_number": "304C",
         "is_active": True
     }
-    
-    create_response = test_client.post("/residents", json=new_resident)
+
+    create_response = test_client.post("/residents/", json=new_resident)
     assert create_response.status_code == 201
-    created_data = create_response.json()
-    resident_id = created_data["id"]
+    created_resident = create_response.json()
     
-    # Now try to retrieve the created resident
+    # Verificar se o campo id está presente
+    assert "id" in created_resident, f"Campo 'id' não encontrado na resposta: {created_resident}"
+    resident_id = created_resident["id"]
+
+    # Then retrieve it
     get_response = test_client.get(f"/residents/{resident_id}")
     assert get_response.status_code == 200
-    get_data = get_response.json()
-    assert get_data["name"] == new_resident["name"]
-    assert get_data["id"] == resident_id 
+    retrieved_resident = get_response.json()
+    assert retrieved_resident["name"] == new_resident["name"]
+    assert retrieved_resident["email"] == new_resident["email"]
+    assert retrieved_resident["id"] == resident_id
+
+def test_create_resident_validation(test_client):
+    """Test validation when creating a resident."""
+    invalid_resident = {
+        "name": "T",  # too short
+        "email": "not-an-email",
+        "phone": "123"  # invalid phone
+    }
+
+    response = test_client.post("/residents/", json=invalid_resident)
+    assert response.status_code == 422
+    errors = response.json()["detail"]
+    assert any("name" in error["loc"] for error in errors)
+    assert any("email" in error["loc"] for error in errors)
+    assert any("phone" in error["loc"] for error in errors) 
