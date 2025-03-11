@@ -9,7 +9,7 @@ jest.mock('axios');
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
 }));
-jest.mock('../../ui/Toast', () => ({
+jest.mock('../../../components/ui/Toast', () => ({
   useToast: () => ({
     showToast: jest.fn(),
   }),
@@ -40,8 +40,11 @@ jest.mock('framer-motion', () => ({
 
 // Define types for Web Speech API
 declare global {
+  // @ts-ignore
   interface Window {
+    // @ts-ignore
     SpeechRecognition: any;
+    // @ts-ignore
     webkitSpeechRecognition: any;
     AudioContext: any;
     webkitAudioContext: any;

@@ -22,6 +22,9 @@ from models.resident import ResidentModel
 from models.request import RequestModel
 from models.user import UserModel, UserRole, UserAchievement, UserLevel
 
+# Importar rotas modulares
+from routes.user_routes import router as user_router
+
 # Carrega as variáveis de ambiente
 load_dotenv()
 
@@ -550,6 +553,9 @@ async def process_voice_command(
         response["reply"] = "Desculpe, não entendi o comando. Pode tentar novamente?"
     
     return response
+
+# Adiciona os routers para diferente funcionalidades
+app.include_router(user_router)
 
 if __name__ == "__main__":
     uvicorn.run(

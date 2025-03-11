@@ -38,6 +38,9 @@ jest.mock('../../components/ui/Toast', () => ({
   ToastProvider: ({ children }: React.PropsWithChildren<{}>) => (
     <div data-testid="mock-toast-provider">{children}</div>
   ),
+  useToast: () => ({
+    showToast: jest.fn(),
+  }),
 }));
 
 describe('OnboardingPage', () => {

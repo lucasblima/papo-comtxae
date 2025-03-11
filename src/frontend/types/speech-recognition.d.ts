@@ -1,56 +1,74 @@
-// src/frontend/src/types/speech-recognition.d.ts
+/**
+ * TypeScript definitions for the Web Speech API
+ * These types are needed because TypeScript doesn't include full definitions for the Web Speech API
+ */
 
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
+export interface SpeechRecognitionErrorEvent extends Event {
+  error: 'no-speech' | 'aborted' | 'audio-capture' | 'network' | 'not-allowed' | 'service-not-allowed' | 'bad-grammar' | 'language-not-supported';
   message: string;
 }
 
-interface SpeechRecognitionEvent extends Event {
-  resultIndex: number;
-  results: SpeechRecognitionResultList;
+export interface SpeechRecognitionEvent extends Event {
+  readonly resultIndex: number;
+  readonly results: SpeechRecognitionResultList;
 }
 
-interface SpeechRecognitionResultList {
-  length: number;
+export interface SpeechRecognitionResultList {
+  readonly length: number;
   item(index: number): SpeechRecognitionResult;
   [index: number]: SpeechRecognitionResult;
 }
 
-interface SpeechRecognitionResult {
-  isFinal: boolean;
-  length: number;
+export interface SpeechRecognitionResult {
+  readonly length: number;
   item(index: number): SpeechRecognitionAlternative;
   [index: number]: SpeechRecognitionAlternative;
+  isFinal?: boolean;
 }
 
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
+export interface SpeechRecognitionAlternative {
+  readonly transcript: string;
+  readonly confidence: number;
 }
 
-interface SpeechRecognition extends EventTarget {
+export interface SpeechRecognition extends EventTarget {
   continuous: boolean;
   grammars: any;
   interimResults: boolean;
   lang: string;
   maxAlternatives: number;
-  onstart: (event: Event) => void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onaudioend: (event: Event) => void;
+  onaudiostart: (event: Event) => void;
   onend: (event: Event) => void;
+  onerror: (event: Event) => void;
+  onnomatch: (event: Event) => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onsoundend: (event: Event) => void;
+  onsoundstart: (event: Event) => void;
+  onspeechend: (event: Event) => void;
+  onspeechstart: (event: Event) => void;
+  onstart: (event: Event) => void;
+  abort(): void;
   start(): void;
   stop(): void;
-  abort(): void;
 }
 
-interface SpeechRecognitionConstructor {
-  new(): SpeechRecognition;
+export interface SpeechRecognitionConstructor {
+  new (): SpeechRecognition;
+  prototype: SpeechRecognition;
 }
 
 declare global {
   interface Window {
     SpeechRecognition: SpeechRecognitionConstructor;
     webkitSpeechRecognition: SpeechRecognitionConstructor;
+  }
+  
+  interface AudioContext extends BaseAudioContext {}
+  
+  interface Window {
+    AudioContext: typeof AudioContext;
+    webkitAudioContext: typeof AudioContext;
   }
 }
 

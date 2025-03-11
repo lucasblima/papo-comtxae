@@ -9,7 +9,7 @@ jest.mock('axios');
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
 }));
-jest.mock('../../../ui/Toast', () => ({
+jest.mock('../../../../components/ui/Toast', () => ({
   useToast: () => ({
     showToast: jest.fn(),
   }),
@@ -57,12 +57,16 @@ declare global {
     new(): MockSpeechRecognition;
   }
 
+  // @ts-ignore
   interface Window {
-    SpeechRecognition: MockSpeechRecognitionConstructor;
-    webkitSpeechRecognition: MockSpeechRecognitionConstructor;
+    // @ts-ignore
+    SpeechRecognition: any;
+    // @ts-ignore
+    webkitSpeechRecognition: any;
     AudioContext: any;
     webkitAudioContext: any;
     SpeechSynthesisUtterance: any;
+    // @ts-ignore
     speechSynthesis: any;
   }
 }

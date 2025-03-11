@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { VoiceVisualization } from './VoiceVisualization';
 
-interface EnhancedVoiceButtonProps {
+export interface EnhancedVoiceButtonProps {
   isListening: boolean;
   isProcessing?: boolean;
   onClick: () => void;
@@ -11,13 +11,6 @@ interface EnhancedVoiceButtonProps {
   listeningColor?: string;
   idleColor?: string;
 }
-
-// Define button dimensions
-const buttonDimensions = {
-  sm: { button: 'w-12 h-12', icon: 'w-8 h-8', text: 'text-xs' },
-  md: { button: 'w-16 h-16', icon: 'w-12 h-12', text: 'text-sm' },
-  lg: { button: 'w-20 h-20', icon: 'w-16 h-16', text: 'text-base' }
-};
 
 /**
  * EnhancedVoiceButton: Botão de interação por voz com feedback visual
@@ -31,8 +24,12 @@ export function EnhancedVoiceButton({
   listeningColor = '#EF4444', // red-500
   idleColor = '#4F46E5', // indigo-600
 }: EnhancedVoiceButtonProps): React.ReactElement {
-  // Determine button dimensions based on size, with fallback to medium
-  const dimensions = buttonDimensions[size] || buttonDimensions.md;
+  // Determine button dimensions based on size
+  const dimensions = {
+    sm: { button: 'w-12 h-12', icon: 'w-8 h-8', text: 'text-xs' },
+    md: { button: 'w-16 h-16', icon: 'w-12 h-12', text: 'text-sm' },
+    lg: { button: 'w-20 h-20', icon: 'w-16 h-16', text: 'text-base' }
+  }[size];
 
   return (
     <button

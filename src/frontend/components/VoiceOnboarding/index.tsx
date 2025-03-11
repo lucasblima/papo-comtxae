@@ -5,6 +5,15 @@ import { useRouter } from 'next/router';
 import { EnhancedVoiceButton } from '../VoiceInput/EnhancedVoiceButton';
 import { VoiceVisualization } from '../VoiceInput/VoiceVisualization';
 import { useToast } from '../ui/Toast';
+import type { SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionConstructor } from '../../types/speech-recognition';
+
+declare global {
+  interface Window {
+    SpeechRecognition: SpeechRecognitionConstructor;
+    webkitSpeechRecognition: SpeechRecognitionConstructor;
+    webkitAudioContext: typeof AudioContext;
+  }
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -48,21 +57,27 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const hadUserInteractionRef = useRef(false);
   
   // Configuração do reconhecimento de voz
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
+      const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognitionAPI) {
+        const recognition = new SpeechRecognitionAPI();
         recognition.lang = 'pt-BR';
         recognition.continuous = false;
         recognition.interimResults = true;
         
-        recognition.onresult = (event) => {
-          const last = event.results.length - 1;
-          const result = event.results[last][0].transcript;
-          setTranscript(result);
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          if (event.results && event.results.length > 0) {
+            const last = event.results.length - 1;
+            if (event.results[last] && event.results[last][0]) {
+              const result = event.results[last][0].transcript;
+              setTranscript(result);
+            }
+          }
         };
         
         recognition.onend = () => {
@@ -73,6 +88,8 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
             processConfirmationStep();
           }
         };
+        
+        recognitionRef.current = recognition;
         
         return () => {
           recognition.abort();
@@ -95,30 +112,67 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
     return () => {};
   }, [currentStep, transcript]);
   
-  // Iniciar gravação de áudio
-  const startRecording = async () => {
-    try {
-      setIsRecording(true);
-      setTranscript('');
-      
-      // Inicializa áudio para visualização
-      if (!audioContextRef.current) {
-        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 256;
+  // Function to speak text
+  const speakText = (text: string) => {
+    if (typeof window !== 'undefined' && 
+        typeof SpeechSynthesisUtterance !== 'undefined' && 
+        typeof speechSynthesis !== 'undefined' &&
+        hadUserInteractionRef.current) {
+      const speech = new SpeechSynthesisUtterance(text);
+      speech.lang = 'pt-BR';
+      speechSynthesis.speak(speech);
+    }
+  };
+
+  // Handle user interaction
+  const handleUserInteraction = () => {
+    hadUserInteractionRef.current = true;
+    const step = steps[currentStep];
+    if (step && step.voicePrompt) {
+      let voicePrompt = step.voicePrompt;
+      if (step.id === 'confirmation' && extractedName) {
+        voicePrompt = voicePrompt.replace('{name}', extractedName);
       }
+      speakText(voicePrompt);
+    }
+  };
+
+  // Start recording with user interaction
+  const startRecording = async () => {
+    if (isRecording) return;
+    
+    try {
+      handleUserInteraction(); // Mark that we had user interaction
+      setIsRecording(true);
       
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-      
-      if (audioContextRef.current && analyserRef.current) {
-        const source = audioContextRef.current.createMediaStreamSource(stream);
-        source.connect(analyserRef.current);
+      // Create audio context for visualization
+      if (typeof window !== 'undefined' && 
+          typeof AudioContext !== 'undefined' && 
+          typeof navigator.mediaDevices !== 'undefined' &&
+          typeof navigator.mediaDevices.getUserMedia === 'function') {
         
-        // Monitorar volume
-        const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
-        const checkVolume = () => {
-          if (isRecording && analyserRef.current) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaStreamRef.current = stream;
+        
+        if (!audioContextRef.current) {
+          const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+          if (AudioContextClass) {
+            audioContextRef.current = new AudioContextClass();
+          }
+        }
+        
+        if (audioContextRef.current && typeof audioContextRef.current.createAnalyser === 'function') {
+          analyserRef.current = audioContextRef.current.createAnalyser();
+          analyserRef.current.fftSize = 256;
+          
+          const source = audioContextRef.current.createMediaStreamSource(stream);
+          source.connect(analyserRef.current);
+          
+          const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+          
+          const checkVolume = () => {
+            if (!analyserRef.current || !isRecording) return;
+            
             analyserRef.current.getByteFrequencyData(dataArray);
             let sum = 0;
             for (let i = 0; i < dataArray.length; i++) {
@@ -130,24 +184,23 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
             if (isRecording) {
               requestAnimationFrame(checkVolume);
             }
-          }
-        };
-        checkVolume();
+          };
+          
+          checkVolume();
+        }
       }
       
-      // Iniciar reconhecimento de voz
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'pt-BR';
-      recognition.start();
-      
+      // Start speech recognition
+      if (recognitionRef.current) {
+        recognitionRef.current.start();
+      }
     } catch (error) {
       console.error('Erro ao iniciar gravação:', error);
       setIsRecording(false);
       showToast({
         title: 'Erro',
-        description: 'Não foi possível acessar o microfone.',
-        type: 'error',
+        description: 'Não foi possível acessar o microfone. Verifique as permissões.',
+        type: 'error'
       });
     }
   };
@@ -297,16 +350,18 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
         {step.id !== 'success' && (
           <div className="mt-6 relative">
             <EnhancedVoiceButton 
-              isRecording={isRecording}
+              isListening={isRecording}
               onClick={startRecording}
-              disabled={isProcessing}
-              volume={audioVolume}
-              size="large"
+              isProcessing={isProcessing}
+              size="lg"
             />
             
             {isRecording && (
               <div className="mt-4">
-                <VoiceVisualization volume={audioVolume} />
+                <VoiceVisualization 
+                  isListening={isRecording} 
+                  amplitude={audioVolume}
+                />
               </div>
             )}
             
@@ -375,7 +430,7 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
     );
   };
   
-  // Efeito para falar o prompt de voz quando o passo muda
+  // Play voice prompt when step changes
   useEffect(() => {
     const step = steps[currentStep];
     if (step && step.voicePrompt) {
@@ -384,14 +439,19 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
         voicePrompt = voicePrompt.replace('{name}', extractedName);
       }
       
-      const speech = new SpeechSynthesisUtterance(voicePrompt);
-      speech.lang = 'pt-BR';
-      speechSynthesis.speak(speech);
+      // Check if SpeechSynthesisUtterance is available (not in test environment)
+      if (typeof window !== 'undefined' && 
+          typeof SpeechSynthesisUtterance !== 'undefined' && 
+          typeof speechSynthesis !== 'undefined') {
+        const speech = new SpeechSynthesisUtterance(voicePrompt);
+        speech.lang = 'pt-BR';
+        speechSynthesis.speak(speech);
+        
+        return () => {
+          speechSynthesis.cancel();
+        };
+      }
     }
-    
-    return () => {
-      speechSynthesis.cancel();
-    };
   }, [currentStep, extractedName]);
   
   return (
