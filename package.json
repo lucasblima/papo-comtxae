@@ -21,6 +21,7 @@
     "concurrently": "^8.0.0"
   },
   "dependencies": {
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "react-toastify": "^10.0.4"
   }
 }

@@ -6,14 +6,16 @@ import { signIn } from 'next-auth/react';
 import { EnhancedVoiceButton } from './EnhancedVoiceButton';
 import { VoiceVisualization } from './VoiceVisualization';
 import { useToast } from '../ui/Toast';
-import type { SpeechRecognition, SpeechRecognitionEvent } from '../../types/speech-recognition.d';
 
-// Add TypeScript declarations for WebKit audio interfaces
-declare global {
-  interface Window {
-    webkitAudioContext: typeof AudioContext;
-    webkitSpeechRecognition: typeof SpeechRecognition;
-  }
+// Define proper types for Speech Recognition
+interface SpeechRecognitionErrorEvent extends Event {
+  error: 'aborted' | 'audio-capture' | 'network' | 'not-allowed' | 'no-speech' | 'service-not-allowed';
+  message: string;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -77,6 +79,8 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [phoneError, setPhoneError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   
   // Configuração do reconhecimento de voz
   useEffect(() => {
@@ -117,12 +121,22 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
           }
         };
         
-        recognition.onerror = (event) => {
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
           console.error('Speech recognition error:', event.error);
           setIsRecording(false);
+          
+          const errorMessages = {
+            'not-allowed': 'Não foi possível acessar o microfone. Verifique as permissões.',
+            'audio-capture': 'Não foi possível capturar áudio. Verifique seu microfone.',
+            'network': 'Erro de conexão. Verifique sua internet.',
+            'no-speech': 'Nenhum áudio detectado. Tente falar mais alto.',
+            'service-not-allowed': 'Serviço de reconhecimento não disponível.',
+            'aborted': 'Reconhecimento de voz interrompido.'
+          };
+
           showToast({
             title: 'Erro no reconhecimento de voz',
-            description: `Erro: ${event.error}. Por favor, tente novamente.`,
+            description: errorMessages[event.error] || 'Erro desconhecido. Tente novamente.',
             type: 'error',
           });
         };
@@ -628,8 +642,36 @@ export function VoiceOnboarding({ onComplete, className = '' }: VoiceOnboardingP
     return () => {};
   }, [currentStep, extractedName]);
   
+  // Add keyboard handler for accessibility
+  const handleKeyPress = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (!isRecording && !isLoading) {
+        startRecording();
+      } else if (isRecording) {
+        setIsRecording(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const button = buttonRef.current;
+    if (button) {
+      button.addEventListener('keypress', handleKeyPress);
+    }
+    return () => {
+      if (button) {
+        button.removeEventListener('keypress', handleKeyPress);
+      }
+    };
+  }, [isRecording, isLoading]);
+  
   return (
-    <div className={`min-h-[70vh] flex flex-col items-center justify-center px-4 ${className}`}>
+    <div 
+      role="main"
+      aria-live="polite"
+      className={`min-h-[70vh] flex flex-col items-center justify-center px-4 ${className}`}
+    >
       <div className="w-full max-w-3xl bg-base-100 shadow-xl rounded-xl p-8 relative overflow-hidden">
         {/* Fundo animado */}
         <div className="absolute inset-0 opacity-10 pointer-events-none">
