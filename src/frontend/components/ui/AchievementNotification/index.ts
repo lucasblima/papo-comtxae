@@ -5,5 +5,4 @@
  */
 
 export { AchievementNotification } from './AchievementNotification';
-export { default } from './AchievementNotification';
 export * from './types'; 

@@ -1,188 +1,197 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
-import axios from 'axios';
-import { ThemeToggle } from '../components/ThemeToggle';
-import { ErrorBoundary } from '../components/ErrorBoundary';
-import { useToast } from '../components/ui/Toast';
-import { motion } from 'framer-motion';
+import { useSession, signOut } from 'next-auth/react';
+import type { Session } from 'next-auth';
+import { ThemeToggle } from '../components/ui';
+import { UserAchievement } from '../components/ui/AchievementNotification/types';
 
-interface Achievement {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  dateUnlocked: string;
-  points: number;
-}
+// Type guard to check if the user has badges
+const userHasBadges = (user: Session['user']): user is Session['user'] & { badges: UserAchievement[] } => {
+  return !!user && Array.isArray(user.badges) && user.badges.length > 0;
+};
 
-interface UserData {
-  _id: string;
-  name: string;
-  associations: string[];
-  level: number;
-  xp: number;
-  achievements: Achievement[];
-}
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
-export default function Dashboard() {
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function DashboardPage() {
+  const { data: session, status } = useSession();
   const router = useRouter();
-  const { showToast } = useToast();
-
+  const [loading, setLoading] = useState(true);
+  
+  // Redirect to login if not authenticated
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        // In a real app, you would get the user ID from context/auth
-        // For now, we'll just assume we have it or use a mock
-        const userId = localStorage.getItem('userId') || 'mock-user-id';
-        
-        const response = await axios.get(`${API_URL}/users/${userId}`);
-        setUserData(response.data);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        showToast({
-          title: 'Erro',
-          description: 'Não foi possível carregar seus dados. Tente novamente mais tarde.',
-          type: 'error'
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUserData();
-  }, [showToast]);
-
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    } else if (status === 'authenticated') {
+      setLoading(false);
+    }
+  }, [status, router]);
+  
+  // Handle sign out
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.push('/');
+  };
+  
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="loading loading-spinner loading-lg"></div>
+      <div className="min-h-screen flex items-center justify-center bg-base-200">
+        <div className="text-center">
+          <div className="loading loading-spinner loading-lg mb-4"></div>
+          <p>Carregando seu painel...</p>
+        </div>
       </div>
     );
   }
 
+  // Safe access to user data with defaults
+  const userName = session?.user?.name || 'Amigo';
+  const userXp = session?.user?.xp || 50;
+  const userLevel = session?.user?.level || 1;
+  const userBadges = session?.user?.badges || [];
+  const hasBadges = userHasBadges(session?.user as Session['user']);
+  
   return (
-    <ErrorBoundary>
+    <div className="min-h-screen bg-gradient-to-b from-base-200 to-base-100" data-theme="dim">
       <Head>
-        <title>Dashboard | Papo Social</title>
-        <meta name="description" content="Seu painel no Papo Social" />
+        <title>Painel - Papo Social</title>
+        <meta name="description" content="Seu painel personalizado no Papo Social" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="min-h-screen bg-base-200">
-        <header className="bg-base-100 shadow-md">
-          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Papo Social</h1>
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              <button className="btn btn-ghost btn-circle avatar">
-                <div className="rounded-full">
-                  <span className="text-xl">👤</span>
+      {/* Header with user info */}
+      <header className="p-4 flex justify-between items-center bg-base-100 shadow-md">
+        <div className="flex items-center">
+          <Link href="/" className="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4v-4z" />
+            </svg>
+            <span className="text-xl font-bold">Papo Social</span>
+          </Link>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          <div className="dropdown dropdown-end">
+            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle avatar">
+              <div className="w-10 rounded-full bg-primary text-primary-content flex items-center justify-center">
+                <span className="text-xl font-bold">
+                  {userName.charAt(0) || '?'}
+                </span>
+              </div>
+            </div>
+            <ul tabIndex={0} className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
+              <li className="p-2 text-center font-bold border-b border-base-300">
+                {userName}
+              </li>
+              <li><a>Perfil</a></li>
+              <li><a>Configurações</a></li>
+              <li><a onClick={handleSignOut}>Sair</a></li>
+            </ul>
+          </div>
+          <ThemeToggle />
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Welcome Section */}
+          <div className="bg-base-100 rounded-lg shadow-lg p-6 mb-8">
+            <h1 className="text-3xl font-bold mb-4">
+              Bem-vindo, {userName}!
+            </h1>
+            <p className="mb-4">
+              Este é seu painel personalizado no Papo Social. Aqui você pode acompanhar suas conquistas, 
+              participar de comunidades e muito mais.
+            </p>
+            <div className="stats shadow">
+              <div className="stat">
+                <div className="stat-figure text-primary">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
                 </div>
-              </button>
+                <div className="stat-title">XP Total</div>
+                <div className="stat-value text-primary">{userXp}</div>
+                <div className="stat-desc">Nível {userLevel}</div>
+              </div>
+              
+              <div className="stat">
+                <div className="stat-figure text-secondary">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <div className="stat-title">Distintivos</div>
+                <div className="stat-value text-secondary">{userBadges.length}</div>
+                <div className="stat-desc">Conquistas desbloqueadas</div>
+              </div>
             </div>
           </div>
-        </header>
-
-        <div className="container mx-auto px-4 py-8">
-          <section className="welcome-section mb-8">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="card bg-base-100 shadow-xl"
-            >
+          
+          {/* Badges Section */}
+          <div className="bg-base-100 rounded-lg shadow-lg p-6 mb-8">
+            <h2 className="text-2xl font-bold mb-4">Seus Distintivos</h2>
+            
+            {hasBadges ? (
+              <div className="flex flex-wrap gap-3">
+                {userBadges.map((badge, index) => (
+                  <div key={index} className="badge badge-lg gap-2 p-4 bg-base-300">
+                    <span className="text-xl">{badge.icon || '🏆'}</span>
+                    {badge.name || 'Distintivo'}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="stroke-info shrink-0 w-6 h-6">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Você ainda não conquistou nenhum distintivo. Participe de atividades para ganhar!</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <Link href="/quiz" className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
               <div className="card-body">
-                <h2 className="card-title text-2xl">Bem-vindo, {userData?.name || 'Usuário'}!</h2>
-                <p>Seu progresso atual:</p>
-                <div className="flex items-center gap-4 mt-2">
-                  <div className="badge badge-primary badge-lg">Nível {userData?.level || 1}</div>
-                  <div className="flex-grow">
-                    <div className="w-full bg-base-300 rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full" 
-                        style={{ width: `${(userData?.xp || 0) % 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="text-sm">{userData?.xp || 0} XP</div>
+                <h2 className="card-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Quiz de Comunidade
+                </h2>
+                <p>Teste seus conhecimentos sobre engajamento comunitário e ganhe distintivos!</p>
+                <div className="card-actions justify-end">
+                  <button className="btn btn-primary">Iniciar Quiz</button>
                 </div>
               </div>
-            </motion.div>
-          </section>
-
-          <section className="achievements-section mb-8">
-            <h2 className="text-xl font-bold mb-4">Suas Conquistas</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(userData?.achievements || []).length > 0 ? (
-                userData?.achievements.map((achievement) => (
-                  <motion.div 
-                    key={achievement.id}
-                    whileHover={{ scale: 1.03 }}
-                    className="card bg-base-100 shadow-md"
-                  >
-                    <div className="card-body">
-                      <div className="flex items-center gap-3">
-                        <div className="achievement-icon text-2xl">{achievement.icon}</div>
-                        <div>
-                          <h3 className="card-title text-lg">{achievement.name}</h3>
-                          <p className="text-sm">{achievement.description}</p>
-                          <div className="text-xs text-base-content/70 mt-1">
-                            Desbloqueado em: {new Date(achievement.dateUnlocked).toLocaleDateString()}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="card-actions justify-end mt-2">
-                        <div className="badge badge-outline">+{achievement.points} XP</div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
-              ) : (
-                <div className="col-span-full text-center p-8 bg-base-100 rounded-box shadow-sm">
-                  <p>Você ainda não tem conquistas. Continue usando o Papo Social para desbloquear!</p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="actions-section">
-            <h2 className="text-xl font-bold mb-4">Ações</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
-                <div className="card-body">
-                  <h3 className="card-title">Enviar Mensagem</h3>
-                  <p>Comunique-se com outros membros da plataforma</p>
-                  <div className="card-actions justify-end mt-2">
-                    <button className="btn btn-primary">Iniciar</button>
-                  </div>
+            </Link>
+            
+            <Link href="/communities" className="card bg-base-100 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="card-body">
+                <h2 className="card-title">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  Comunidades
+                </h2>
+                <p>Encontre e participe de comunidades locais que compartilham seus interesses.</p>
+                <div className="card-actions justify-end">
+                  <button className="btn btn-primary">Explorar</button>
                 </div>
               </div>
-              <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
-                <div className="card-body">
-                  <h3 className="card-title">Entrar em Comunidade</h3>
-                  <p>Participe de novas comunidades de interesse</p>
-                  <div className="card-actions justify-end mt-2">
-                    <button className="btn btn-primary">Explorar</button>
-                  </div>
-                </div>
-              </div>
-              <div className="card bg-base-100 shadow-md hover:shadow-lg transition-shadow">
-                <div className="card-body">
-                  <h3 className="card-title">Acessar Ajuda</h3>
-                  <p>Saiba como usar todos os recursos do Papo Social</p>
-                  <div className="card-actions justify-end mt-2">
-                    <button className="btn btn-primary">Ajuda</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+            </Link>
+          </div>
         </div>
       </main>
-    </ErrorBoundary>
+      
+      {/* Simplified Footer */}
+      <footer className="footer footer-center p-6 bg-base-100 text-base-content">
+        <div>
+          <p>© 2024 Papo Social - Todos os direitos reservados</p>
+        </div>
+      </footer>
+    </div>
   );
 } 

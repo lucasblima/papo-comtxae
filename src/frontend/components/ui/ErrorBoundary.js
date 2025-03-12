@@ -4,6 +4,7 @@
  * Or even better, use the barrel file: import { GlobalErrorBoundary } from './ui';
  */
 
-export { GlobalErrorBoundary as ErrorBoundary } from './ui/GlobalErrorBoundary';
-export { withErrorBoundary } from './ui/GlobalErrorBoundary';
+import { GlobalErrorBoundary } from './GlobalErrorBoundary';
+export { GlobalErrorBoundary as ErrorBoundary } from './GlobalErrorBoundary';
+export { withErrorBoundary } from './GlobalErrorBoundary';
 export default GlobalErrorBoundary; 

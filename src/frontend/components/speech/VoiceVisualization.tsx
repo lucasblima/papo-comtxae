@@ -1,87 +1,144 @@
-import React, { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
 
-export interface VoiceVisualizationProps {
-  /** Whether the microphone is actively listening */
+interface VoiceVisualizationProps {
+  /** The current volume level (0-255) */
+  volume: number;
+  /** Whether the component is actively listening */
   isListening?: boolean;
-  /** The current volume level (0-100) */
-  volume?: number;
-  /** Amplitude value (0 to 1) - alternative to volume */
-  amplitude?: number;
-  /** Color of the visualization */
-  color?: string;
-  /** Size of the visualization */
-  size?: 'sm' | 'md' | 'lg';
-  /** Optional class name for styling */
+  /** Additional CSS classes */
   className?: string;
 }
 
 /**
- * VoiceVisualization: A component that provides visual feedback for voice input
+ * A component that visualizes voice input with animated bars
  * 
  * @example
- * <VoiceVisualization isListening={true} volume={50} />
- * <VoiceVisualization isListening={true} amplitude={0.5} color="#4F46E5" />
+ * <VoiceVisualization volume={75} isListening={true} className="h-24" />
  */
-export function VoiceVisualization({
+export function VoiceVisualization({ 
+  volume, 
   isListening = false,
-  volume,
-  amplitude = 0.5,
-  color = '#4F46E5',
-  size = 'md',
-  className = ''
+  className = '' 
 }: VoiceVisualizationProps): React.ReactElement {
-  const [bars, setBars] = useState<number[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // If volume is provided, convert it to amplitude (0-1 range)
-  const effectiveAmplitude = volume !== undefined 
-    ? Math.min(1, Math.max(0, volume / 100))
-    : amplitude;
-  
-  // Number of bars in the visualization
-  const barCount = size === 'sm' ? 3 : size === 'md' ? 5 : 7;
-  
-  // Base size of visualization container
-  const containerSize = size === 'sm' ? 'h-8 w-16' : size === 'md' ? 'h-12 w-24' : 'h-16 w-32';
-  
-  // Generate random bar heights when listening
-  useEffect(() => {
-    if (isListening) {
-      const interval = setInterval(() => {
-        const newBars = Array(barCount).fill(0).map(() => {
-          return effectiveAmplitude * (0.5 + Math.random() * 0.5);
-        });
-        setBars(newBars);
-      }, 100);
+  /**
+   * Helper function to convert hex colors to rgba
+   * This handles both #rgb and #rrggbb formats as well as CSS variables
+   */
+  const hexToRgba = (hex: string, alpha: number = 1): string => {
+    try {
+      // If color is already in rgb/rgba format, parse it
+      if (hex.startsWith('rgb')) {
+        const rgbValues = hex.match(/\d+/g);
+        if (rgbValues && rgbValues.length >= 3) {
+          return `rgba(${rgbValues[0]}, ${rgbValues[1]}, ${rgbValues[2]}, ${alpha})`;
+        }
+      }
       
-      return () => clearInterval(interval);
-    } else {
-      setBars(Array(barCount).fill(0.1));
-      return () => {};
+      // Handle CSS variable format (DaisyUI often uses HSL format)
+      if (!hex.startsWith('#')) {
+        // Just use a default known color that works well
+        return `rgba(87, 13, 248, ${alpha})`;
+      }
+      
+      // Remove hash sign if present
+      hex = hex.replace('#', '');
+      
+      // Expand shorthand hex
+      if (hex.length === 3) {
+        hex = hex.split('').map(char => char + char).join('');
+      }
+      
+      // Convert to rgb
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      
+      // Return rgba
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    } catch (error) {
+      console.error('Color parsing error:', error);
+      // Fallback color
+      return `rgba(87, 13, 248, ${alpha})`;
     }
-  }, [isListening, barCount, effectiveAmplitude]);
+  };
+  
+  // Animation effect
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Set canvas dimensions to match its display size
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Create visualization bars
+    const barWidth = 6;
+    const barGap = 4;
+    const totalBarWidth = barWidth + barGap;
+    const numBars = Math.floor(canvas.width / totalBarWidth);
+    
+    // Just use a fixed color that we know works well
+    // DaisyUI's CSS variables aren't compatible with Canvas API
+    const primaryColorRgba = hexToRgba('#570df8', 1.0);      // Solid color
+    const primaryColorTransparent = hexToRgba('#570df8', 0.85); // Semi-transparent
+    
+    // Generate random heights with volume influence
+    const normalizedVolume = Math.min(255, Math.max(0, volume)) / 255;
+    const baseHeight = canvas.height * 0.1;
+    const maxVariableHeight = canvas.height * 0.7;
+    
+    for (let i = 0; i < numBars; i++) {
+      // For active listening, make bars dynamic based on volume and position
+      let barHeight;
+      
+      if (isListening) {
+        // Create a wave-like pattern influenced by volume
+        const positionFactor = Math.sin((i / numBars) * Math.PI * 2);
+        const randomFactor = Math.random() * 0.3 + 0.7; // 0.7-1.0 random factor
+        
+        // Combine factors with volume for natural-looking animation
+        barHeight = baseHeight + maxVariableHeight * normalizedVolume * positionFactor * randomFactor;
+      } else {
+        // When not listening, show minimal activity
+        const minHeight = canvas.height * 0.05;
+        const smallRandomHeight = canvas.height * 0.1 * Math.random();
+        barHeight = minHeight + smallRandomHeight;
+      }
+      
+      // Ensure height is positive and within canvas
+      barHeight = Math.max(2, Math.min(barHeight, canvas.height * 0.9));
+      
+      // Position bar from bottom of canvas
+      const x = i * (barWidth + barGap);
+      const y = canvas.height - barHeight;
+      
+      // Draw with rounded corners and gradient
+      ctx.beginPath();
+      ctx.roundRect(x, y, barWidth, barHeight, 3);
+      
+      // Create gradient
+      const gradient = ctx.createLinearGradient(0, y, 0, canvas.height);
+      gradient.addColorStop(0, primaryColorTransparent); // Lighter at top
+      gradient.addColorStop(1, primaryColorRgba);        // Darker at bottom
+      
+      ctx.fillStyle = gradient;
+      ctx.fill();
+    }
+  }, [volume, isListening]);
   
   return (
-    <div className={`flex items-end justify-center space-x-1 ${containerSize} ${className}`}>
-      {bars.map((height, index) => (
-        <motion.div
-          key={index}
-          className="bg-primary rounded-full w-1.5"
-          style={{ 
-            backgroundColor: color,
-            height: '100%',
-            transformOrigin: 'bottom'
-          }}
-          animate={{ 
-            scaleY: height,
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 300,
-            damping: 30
-          }}
-        />
-      ))}
-    </div>
+    <canvas 
+      ref={canvasRef} 
+      className={`w-full ${className}`}
+      aria-label="Voice visualization"
+    />
   );
 } 

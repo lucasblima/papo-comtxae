@@ -5,11 +5,11 @@
  * Import UI components from this file to avoid direct imports from component files.
  * 
  * Example:
- * import { Button, Card, GlobalErrorBoundary } from './/Button';
+ * import { Button, Card, GlobalErrorBoundary, ThemeToggle, ErrorBoundary } from '../components/ui';
  */
 
 export * from './Toast';
-export * from './theme-toggle';
+export { ThemeToggle } from './ThemeToggle';
 export * from './AchievementNotification';
-export { GlobalErrorBoundary, withErrorBoundary } from './GlobalErrorBoundary';
+export { GlobalErrorBoundary, ErrorBoundary, withErrorBoundary } from './GlobalErrorBoundary';
 // Add other UI component exports here as they are created

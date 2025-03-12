@@ -4,11 +4,15 @@ import Head from 'next/head';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { VoiceVisualization } from '../components/speech/VoiceVisualization';
+import { VoiceOnboarding } from '../components/speech/VoiceOnboarding';
 import { ThemeToggle } from '../components/ui';
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/router';
 
 export default function Home() {
   const { data: session } = useSession();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const router = useRouter();
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-base-200 to-base-100" data-theme="dim">
@@ -66,14 +70,16 @@ export default function Home() {
             </p>
           </motion.div>
           
-          <motion.div 
-            className="mb-12"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <VoiceVisualization volume={30} className="h-24" />
-          </motion.div>
+          {!showOnboarding && !session && (
+            <motion.div 
+              className="mb-12"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <VoiceVisualization volume={30} className="h-24" />
+            </motion.div>
+          )}
           
           <motion.div
             className="space-y-6"
@@ -97,6 +103,14 @@ export default function Home() {
                     </Link>
                   </div>
                 </div>
+              ) : showOnboarding ? (
+                <VoiceOnboarding 
+                  onComplete={(userData) => {
+                    setShowOnboarding(false);
+                    router.push('/dashboard');
+                  }}
+                  className="mt-8"
+                />
               ) : (
                 <div>
                   <p className="text-lg mb-8">
@@ -104,9 +118,12 @@ export default function Home() {
                   </p>
                   
                   <div className="flex justify-center">
-                    <Link href="/onboarding" className="btn btn-primary btn-lg">
+                    <button 
+                      onClick={() => setShowOnboarding(true)} 
+                      className="btn btn-primary btn-lg"
+                    >
                       Começar agora
-                    </Link>
+                    </button>
                   </div>
                 </div>
               )}

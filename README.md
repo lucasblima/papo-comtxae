@@ -1,162 +1,120 @@
 # Papo Social
 
-Aplicação de rede social com assistente de voz integrado.
+Uma plataforma de interação social com foco em acessibilidade e interface por voz.
 
-## Requisitos
+## Sobre o Projeto
 
-- Node.js 18+
-- Python 3.9+
-- MongoDB
+Papo Social é uma plataforma que permite interações sociais por meio de uma interface por voz, tornando a tecnologia acessível para pessoas com diferentes níveis de alfabetização. A plataforma utiliza reconhecimento de voz para onboarding e autenticação de usuários.
 
-## Estrutura do Projeto
+## Funcionalidades
 
-- `src/frontend`: Aplicação Next.js/React com DaisyUI
-- `src/backend`: API FastAPI conectada ao MongoDB
+- **Onboarding por Voz**: Criação de conta usando apenas comandos de voz
+- **Autenticação por Voz**: Login utilizando reconhecimento de voz
+- **Sistema de Conquistas**: Ganhe distintivos ao interagir com a plataforma
+- **Sistema de XP e Níveis**: Evolua na plataforma à medida que participa
 
-## Configuração
+## Fluxo de Usuário
 
-### Backend
+1. **Página Inicial**: O usuário chega ao site
+2. **Onboarding**:
+   - Tela de boas-vindas com introdução
+   - Usuário fala seu nome quando solicitado
+   - Sistema extrai o nome da fala
+   - Usuário confirma seu nome
+   - Criação de conta e atribuição de XP
+3. **Autenticação**:
+   - Autenticação baseada em voz usando Next-Auth
+   - Gerenciamento de sessão
+4. **Dashboard**: Acesso ao painel personalizado após autenticação
 
-1. Copie o arquivo de exemplo de variáveis de ambiente:
-   ```
-   cd src/backend
-   cp .env.example .env
-   ```
+## Tecnologias Utilizadas
 
-2. Edite o arquivo `.env` com suas credenciais do MongoDB:
-   ```
-   MONGODB_URL=mongodb+srv://seu_usuario:sua_senha@seu_cluster.mongodb.net/seu_database?retryWrites=true&w=majority
-   MONGODB_DB_NAME=papo_social_db
-   PORT=8000
-   ```
+- **Frontend**: Next.js, React, TypeScript, TailwindCSS, DaisyUI
+- **Autenticação**: NextAuth.js
+- **APIs de Voz**: Web Speech API para reconhecimento e síntese de voz
+- **Animações**: Framer Motion para transições suaves
 
-3. Instale as dependências:
-   ```
-   pip install -r requirements.txt
-   ```
+## Configuração de Desenvolvimento
 
-### Frontend
+### Pré-requisitos
 
-1. Instale as dependências:
-   ```
-   cd src/frontend
-   npm install
-   ```
-
-## Executando o Projeto
-
-### Ambos (Frontend e Backend)
-
-```
-npm run dev
-```
-
-### Apenas Frontend
-
-```
-npm run dev:frontend
-```
-
-### Apenas Backend
-
-```
-npm run dev:backend
-```
-
-## Testes
-
-### Executar todos os testes
-
-```
-npm run test
-```
-
-### Apenas testes do Frontend
-
-```
-npm run test:frontend
-```
-
-### Apenas testes do Backend
-
-```
-npm run test:backend
-```
-
-## Documentação
-- [Documentação Online](https://lucasblima.github.io/papo-comtxae)
-- [Documentação Local](./docs/README.md)
-
-## Arquitetura Híbrida
-
-O Papo Social utiliza uma arquitetura híbrida que combina:
-- **Python** (FastAPI) para a API principal e orquestração de IA com CrewAI
-- **TypeScript/Next.js** para o frontend interativo
-- **Componentes Rust** para processamento de alta performance
-
-## Configuração do Ambiente
-
-### Requisitos
-
-- Python 3.9 ou superior
-- Node.js 18 ou superior
-- MongoDB Atlas (conta já configurada)
+- Node.js 16+
+- npm ou yarn
 
 ### Instalação
 
-1. **Configure o ambiente Python e instale as dependências**:
-
-   ```bash
-   python setup.py
-   ```
-
-   Este script vai:
-   - Criar um ambiente virtual Python
-   - Instalar todas as dependências do backend
-   - Verificar a configuração do frontend
-
-2. **Configure o ambiente do frontend**:
-
-   ```bash
-   node frontend_setup.js
-   ```
-
-   Este script vai:
-   - Criar a estrutura de diretórios necessária
-   - Configurar o package.json e outras configurações
-   - Instalar dependências do Next.js e React
-
-### Configuração do Banco de Dados
-
-A configuração do MongoDB Atlas já está definida no arquivo `.env`. Se necessário atualize:
-
-## Uso Rápido (Windows)
-
-### Iniciar Servidor de Documentação
+1. Clone o repositório
 ```bash
-# Via script de projeto
-./start-project.sh
-# Opção 1) Iniciar servidor de documentação
+git clone https://github.com/seu-usuario/papo-comtxae.git
+cd papo-comtxae
+```
 
-# OU diretamente
-docsify serve docs
+2. Instale as dependências
+```bash
+npm install
+```
+
+3. Configure as variáveis de ambiente
+```bash
+cp .env.example .env.local
+```
+
+4. Execute o servidor de desenvolvimento
+```bash
+npm run dev
+```
+
+5. Acesse http://localhost:3000
+
+## Estrutura do Projeto
+
+```
+src/
+├── frontend/
+│   ├── components/    # Componentes React
+│   │   ├── speech/    # Componentes relacionados a voz
+│   │   └── ui/        # Componentes de interface
+│   ├── pages/         # Páginas da aplicação
+│   │   └── api/       # Rotas de API
+│   ├── styles/        # Estilos globais
+│   └── types/         # Definições de tipos
+└── backend/          # Backend da aplicação (se aplicável)
+```
+
+## Implementação de Autenticação
+
+O fluxo de onboarding e autenticação por voz funciona da seguinte maneira:
+
+1. **VoiceOnboarding**:
+   - O componente captura a entrada de voz do usuário
+   - Extrai o nome do texto transcrito
+   - Confirma o nome com o usuário
+   - Registra o usuário usando NextAuth
+
+2. **NextAuth**:
+   - Provedor customizado para autenticação por voz
+   - Armazena dados de voz para futuras autenticações
+   - Gerencia sessões de usuário via JWT
+
+3. **Proteção de Rotas**:
+   - Middleware Next.js para proteger rotas privadas
+   - Redirecionamento para login quando não autenticado
+   - Componente AuthCheck para páginas protegidas
+
+## Testes
+
+```bash
+npm test
 ```
 
 ## Contribuição
 
-Veja nosso [Guia de Contribuição](./docs/CONTRIBUTING.md) para detalhes sobre como participar do desenvolvimento.
-
-## Estrutura
-```
-papo-comtxae/
-├── docs/              # Documentação
-├── src/               # Código fonte (futuro)
-│   ├── frontend/      # Next.js/React
-│   ├── backend/       # FastAPI (Python) 
-│   └── rust_core/     # Componentes Rust
-└── README.md          # Este arquivo
-```
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/nova-feature`)
+3. Faça commit das alterações (`git commit -m 'Adiciona nova feature'`)
+4. Faça push para a branch (`git push origin feature/nova-feature`)
+5. Abra um Pull Request
 
 ## Licença
 
-Este projeto é privado e proprietário.
+Este projeto está licenciado sob a licença MIT - veja o arquivo LICENSE para detalhes.

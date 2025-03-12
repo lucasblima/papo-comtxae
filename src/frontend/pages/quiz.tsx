@@ -3,11 +3,11 @@ import Head from 'next/head';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ui';
-import { VoiceVisualization } from '..\components\speech/VoiceVisualization';
-import { AchievementNotification } from '../components/AchievementNotification';
+import { VoiceVisualization } from '../components/speech/VoiceVisualization';
+import { AchievementNotification } from '../components/ui';
 
 // Import SpeechRecognition types
-import type { SpeechRecognition } from '../types/speech-recognition.d';
+import type { SpeechRecognition, SpeechRecognitionEvent } from '../types/speech-recognition.d';
 
 interface QuizQuestion {
   id: number;
@@ -91,6 +91,15 @@ export default function QuizPage() {
   
   // Initialize speech recognition
   useEffect(() => {
+    initializeSpeechRecognition();
+    
+    return () => {
+      stopRecording();
+    };
+  }, [transcript]);
+  
+  // Function to initialize speech recognition with proper error handling
+  const initializeSpeechRecognition = () => {
     if (typeof window !== 'undefined') {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognition) {
@@ -99,10 +108,15 @@ export default function QuizPage() {
         recognition.continuous = false;
         recognition.interimResults = true;
         
-        recognition.onresult = (event) => {
-          const last = event.results.length - 1;
-          const result = event.results[last][0].transcript;
-          setTranscript(result);
+        // Type-safe event handler
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
+          if (event?.results?.length > 0) {
+            const last = event.results.length - 1;
+            const transcript = event.results[last]?.[0]?.transcript;
+            if (transcript) {
+              setTranscript(transcript);
+            }
+          }
         };
         
         recognition.onend = () => {
@@ -115,11 +129,7 @@ export default function QuizPage() {
         recognitionRef.current = recognition;
       }
     }
-    
-    return () => {
-      stopRecording();
-    };
-  }, [transcript]);
+  };
   
   const startRecording = async () => {
     setIsRecording(true);
@@ -132,6 +142,11 @@ export default function QuizPage() {
       
       // Create audio context for volume visualization
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) {
+        console.error('AudioContext not supported in this browser');
+        return;
+      }
+      
       audioContextRef.current = new AudioContextClass();
       
       if (audioContextRef.current) {
@@ -150,9 +165,12 @@ export default function QuizPage() {
             if (analyserRef.current) {
               analyserRef.current.getByteFrequencyData(dataArray);
               let sum = 0;
+              
+              // Calculate average volume
               for (let i = 0; i < bufferLength; i++) {
                 sum += dataArray[i];
               }
+              
               const avg = sum / bufferLength;
               setVolume(avg);
               
@@ -162,6 +180,7 @@ export default function QuizPage() {
             }
           };
           
+          // Start volume monitoring
           checkVolume();
         }
       }
@@ -198,6 +217,12 @@ export default function QuizPage() {
   };
   
   const checkAnswer = () => {
+    // Return early if currentQuestion is undefined
+    if (!currentQuestion) {
+      console.error("No current question available");
+      return;
+    }
+
     // Simple string matching - in a real app, this would use NLP to be more flexible
     const userAnswer = transcript.toLowerCase();
     const correctAnswer = currentQuestion.correctAnswer.toLowerCase();
@@ -281,16 +306,20 @@ export default function QuizPage() {
               Pergunta {currentQuestionIndex + 1} de {questions.length}
             </h1>
             
-            <h2 className="text-xl mb-6">{currentQuestion.question}</h2>
-            
-            <div className="space-y-3 mb-8">
-              {currentQuestion.options.map((option, index) => (
-                <div key={index} className="flex items-start">
-                  <div className="badge mr-2">{index + 1}</div>
-                  <p>{option}</p>
+            {currentQuestion && (
+              <>
+                <h2 className="text-xl mb-6">{currentQuestion.question}</h2>
+                
+                <div className="space-y-3 mb-8">
+                  {currentQuestion.options.map((option, index) => (
+                    <div key={index} className="flex items-start">
+                      <div className="badge mr-2">{index + 1}</div>
+                      <p>{option}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            )}
             
             {isRecording ? (
               <div className="text-center">
@@ -371,7 +400,7 @@ export default function QuizPage() {
         </div>
       </footer>
       
-      {showAchievement && (
+      {showAchievement && currentQuestion && (
         <AchievementNotification 
           title={currentQuestion.badge.title}
           description={currentQuestion.badge.description}

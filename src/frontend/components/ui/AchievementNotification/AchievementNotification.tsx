@@ -7,7 +7,27 @@ interface AchievementNotificationProps {
   /**
    * Array of achievements to display
    */
-  achievements: UserAchievement[];
+  achievements?: UserAchievement[];
+  
+  /**
+   * Title of a single achievement to display (alternative to achievements array)
+   */
+  title?: string;
+  
+  /**
+   * Description of a single achievement to display
+   */
+  description?: string;
+  
+  /**
+   * Icon for a single achievement to display
+   */
+  icon?: string;
+  
+  /**
+   * Callback function when notification is closed
+   */
+  onClose?: () => void;
   
   /**
    * Time in milliseconds after which the notification is auto-dismissed
@@ -32,7 +52,11 @@ interface AchievementNotificationProps {
  * Component that displays toast-style notifications for user achievements
  */
 export const AchievementNotification: React.FC<AchievementNotificationProps> = ({
-  achievements,
+  achievements = [],
+  title,
+  description,
+  icon,
+  onClose,
   autoDismissTime = 5000,
   position = 'bottom-right',
   playSounds = true,
@@ -41,10 +65,24 @@ export const AchievementNotification: React.FC<AchievementNotificationProps> = (
   const [isMounted, setIsMounted] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Create a merged achievements array that includes both the array and individual props
+  const allAchievements = [...achievements];
+  
+  // If individual achievement props are provided, add them to the array
+  if (title && description) {
+    allAchievements.push({
+      id: title, // Use title as ID for simplicity
+      name: title,
+      description,
+      icon: icon || '🏆', // Default icon if none provided
+      earnedAt: new Date()
+    });
+  }
+
   // Create unique identifiers for achievements
   useEffect(() => {
-    if (achievements.length > 0) {
-      const newAchievements = achievements.map(achievement => ({
+    if (allAchievements.length > 0) {
+      const newAchievements = allAchievements.map(achievement => ({
         ...achievement,
         key: `${achievement.id}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
       }));
@@ -52,10 +90,10 @@ export const AchievementNotification: React.FC<AchievementNotificationProps> = (
       setVisibleAchievements(prev => [...prev, ...newAchievements]);
       
       // Play sound if enabled
-      if (playSounds && achievements.length > 0 && achievements[0]?.soundEffect && typeof window !== 'undefined') {
+      if (playSounds && allAchievements.length > 0 && allAchievements[0]?.soundEffect && typeof window !== 'undefined') {
         try {
           // Create and play audio element
-          const soundUrl = achievements[0].soundEffect;
+          const soundUrl = allAchievements[0].soundEffect;
           if (soundUrl) {
             const audio = new Audio(soundUrl);
             audioRef.current = audio;
@@ -68,7 +106,7 @@ export const AchievementNotification: React.FC<AchievementNotificationProps> = (
         }
       }
     }
-  }, [achievements, playSounds]);
+  }, [allAchievements, playSounds]);
 
   // Auto-dismiss notifications
   useEffect(() => {
@@ -115,45 +153,61 @@ export const AchievementNotification: React.FC<AchievementNotificationProps> = (
     }
   };
 
+  // Call onClose callback when notification is closed if provided
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    }
+    
+    // Remove all achievements from view
+    setVisibleAchievements([]);
+  };
+
+  // Dismiss a specific achievement
+  const dismissAchievement = (key: string) => {
+    setVisibleAchievements(prev => prev.filter(a => a.key !== key));
+    
+    // If this was the last achievement, call handleClose
+    if (visibleAchievements.length <= 1) {
+      if (onClose) {
+        onClose();
+      }
+    }
+  };
+
   if (!isMounted || visibleAchievements.length === 0) {
     return null;
   }
 
-  const toastContent = (
-    <div className={`toast ${getPositionClasses()} z-50`}>
-      {visibleAchievements.map((achievement) => (
-        <div
-          key={achievement.key}
-          className={`alert shadow-lg bg-base-100 border-2 border-primary w-80 md:w-96 ${styles.animateSlideUp}`}
-          role="alert"
-          aria-live="polite"
+  return createPortal(
+    <div className={`${styles.notificationContainer} ${getPositionClasses()}`}>
+      {visibleAchievements.map(achievement => (
+        <div 
+          key={achievement.key} 
+          className={styles.notification}
         >
-          <div className="flex items-start gap-3">
-            <div className="avatar">
-              <div className="w-12 h-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
-                <img 
-                  src={achievement.icon} 
-                  alt={`${achievement.name} achievement icon`}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-lg">{achievement.name}</h3>
-              <div className="text-sm opacity-80">{achievement.description}</div>
-              {achievement.earnedAt && (
-                <div className="text-xs opacity-60 mt-1">
-                  Conquistado em {achievement.earnedAt.toLocaleDateString()}
-                </div>
-              )}
-            </div>
+          <div className={styles.icon}>
+            {typeof achievement.icon === 'string' && achievement.icon.length <= 2 
+              ? achievement.icon // Treat as emoji or simple text
+              : <img src={achievement.icon} alt="" />
+            }
           </div>
+          <div className={styles.content}>
+            <h3 className={styles.title}>{achievement.name}</h3>
+            <p className={styles.description}>{achievement.description}</p>
+          </div>
+          <button 
+            className={styles.closeButton} 
+            onClick={() => dismissAchievement(achievement.key || '')}
+            aria-label="Close notification"
+          >
+            ×
+          </button>
         </div>
       ))}
-    </div>
+    </div>,
+    document.body
   );
-
-  return typeof document !== 'undefined' ? createPortal(toastContent, document.body) : null;
 };
 
 // Export default for convenience

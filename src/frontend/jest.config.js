@@ -7,7 +7,7 @@ const createJestConfig = nextJest({
 
 // Custom Jest config
 const customJestConfig = {
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
   moduleNameMapper: {
     // Handle module aliases (if you use them in the project)
     '^@/(.*)$': '<rootDir>/src/$1',

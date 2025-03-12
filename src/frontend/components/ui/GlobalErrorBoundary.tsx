@@ -73,6 +73,9 @@ export class GlobalErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoun
   }
 }
 
+// Export GlobalErrorBoundary as ErrorBoundary for backward compatibility
+export { GlobalErrorBoundary as ErrorBoundary };
+
 /**
  * withErrorBoundary is a higher-order component that wraps a component with a GlobalErrorBoundary
  * 

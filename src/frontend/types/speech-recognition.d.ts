@@ -1,13 +1,58 @@
 /**
- * TypeScript definitions for the Web Speech API
- * These types are needed because TypeScript doesn't include full definitions for the Web Speech API
+ * Type definitions for the Web Speech API
+ * These types are used for both implementation and testing
  */
 
-export interface SpeechRecognitionErrorEvent extends Event {
-  error: 'no-speech' | 'aborted' | 'audio-capture' | 'network' | 'not-allowed' | 'service-not-allowed' | 'bad-grammar' | 'language-not-supported';
-  message: string;
+// SpeechRecognition interface
+export interface SpeechRecognition extends EventTarget {
+  // Properties
+  grammars: SpeechGrammarList;
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  maxAlternatives: number;
+  serviceURI: string;
+  
+  // Methods
+  start(): void;
+  stop(): void;
+  abort(): void;
+  
+  // Event handlers
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onaudiostart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onaudioend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+  onsoundstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onsoundend: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onspeechstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onspeechend: ((this: SpeechRecognition, ev: Event) => any) | null;
 }
 
+// SpeechRecognition constructor
+export interface SpeechRecognitionConstructor {
+  prototype: SpeechRecognition;
+  new(): SpeechRecognition;
+}
+
+// Speech grammar list
+export interface SpeechGrammarList {
+  length: number;
+  addFromURI(src: string, weight?: number): void;
+  addFromString(string: string, weight?: number): void;
+  item(index: number): SpeechGrammar;
+  [index: number]: SpeechGrammar;
+}
+
+export interface SpeechGrammar {
+  src: string;
+  weight: number;
+}
+
+// Speech recognition event
 export interface SpeechRecognitionEvent extends Event {
   readonly resultIndex: number;
   readonly results: SpeechRecognitionResultList;
@@ -21,9 +66,9 @@ export interface SpeechRecognitionResultList {
 
 export interface SpeechRecognitionResult {
   readonly length: number;
+  readonly isFinal: boolean;
   item(index: number): SpeechRecognitionAlternative;
   [index: number]: SpeechRecognitionAlternative;
-  isFinal?: boolean;
 }
 
 export interface SpeechRecognitionAlternative {
@@ -31,45 +76,24 @@ export interface SpeechRecognitionAlternative {
   readonly confidence: number;
 }
 
-export interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  grammars: any;
-  interimResults: boolean;
-  lang: string;
-  maxAlternatives: number;
-  onaudioend: (event: Event) => void;
-  onaudiostart: (event: Event) => void;
-  onend: (event: Event) => void;
-  onerror: (event: Event) => void;
-  onnomatch: (event: Event) => void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onsoundend: (event: Event) => void;
-  onsoundstart: (event: Event) => void;
-  onspeechend: (event: Event) => void;
-  onspeechstart: (event: Event) => void;
-  onstart: (event: Event) => void;
-  abort(): void;
-  start(): void;
-  stop(): void;
+// Speech recognition error
+export interface SpeechRecognitionErrorEvent extends Event {
+  readonly error: SpeechRecognitionErrorCode;
+  readonly message: string;
 }
 
-export interface SpeechRecognitionConstructor {
-  new (): SpeechRecognition;
-  prototype: SpeechRecognition;
-}
+export type SpeechRecognitionErrorCode = 
+  | 'no-speech'
+  | 'aborted'
+  | 'audio-capture'
+  | 'network'
+  | 'not-allowed'
+  | 'service-not-allowed'
+  | 'bad-grammar'
+  | 'language-not-supported';
 
+// Declare global types
 declare global {
-  interface Window {
-    SpeechRecognition: SpeechRecognitionConstructor;
-    webkitSpeechRecognition: SpeechRecognitionConstructor;
-  }
-  
-  interface AudioContext extends BaseAudioContext {}
-  
-  interface Window {
-    AudioContext: typeof AudioContext;
-    webkitAudioContext: typeof AudioContext;
-  }
+  var SpeechRecognition: SpeechRecognitionConstructor | undefined;
+  var webkitSpeechRecognition: SpeechRecognitionConstructor | undefined;
 }
-
-export {};
