@@ -72,4 +72,53 @@ def test_resident_model_validation_errors():
             phone="11987654321",
             role="invalid_role"
         )
-    assert "role" in str(exc_info.value) 
+    assert "role" in str(exc_info.value)
+
+# Adicionar testes para UserModel
+def test_user_model_xp_validation():
+    """Test XP and level validations for UserModel."""
+    # Test valid cases
+    user = UserModel(name="Test", xp=100, level=1)
+    assert user.xp == 100
+    assert user.level == 1
+
+    # Test negative XP
+    with pytest.raises(ValidationError) as exc_info:
+        UserModel(name="Test", xp=-1)
+    assert "xp" in str(exc_info.value)
+
+    # Test invalid level
+    with pytest.raises(ValidationError) as exc_info:
+        UserModel(name="Test", level=0)
+    assert "level" in str(exc_info.value)
+
+def test_user_model_achievements():
+    """Test achievement handling in UserModel."""
+    # Test adding valid achievements
+    achievements = [
+        {"id": "first_voice", "name": "First Voice", "completed": True},
+        {"id": "early_adopter", "name": "Early Adopter", "completed": False}
+    ]
+    user = UserModel(name="Test", achievements=achievements)
+    assert len(user.achievements) == 2
+    assert user.achievements[0]["id"] == "first_voice"
+
+    # Test invalid achievement format
+    with pytest.raises(ValidationError) as exc_info:
+        UserModel(name="Test", achievements=[{"invalid": "format"}])
+    assert "achievements" in str(exc_info.value)
+
+def test_user_model_voice_samples():
+    """Test voice samples validation in UserModel."""
+    # Test valid voice samples
+    voice_samples = [
+        {"timestamp": "2024-02-20T10:00:00", "duration": 2.5},
+        {"timestamp": "2024-02-20T10:01:00", "duration": 3.0}
+    ]
+    user = UserModel(name="Test", voice_samples=voice_samples)
+    assert len(user.voice_samples) == 2
+    
+    # Test invalid voice sample format
+    with pytest.raises(ValidationError) as exc_info:
+        UserModel(name="Test", voice_samples=[{"invalid": "format"}])
+    assert "voice_samples" in str(exc_info.value)

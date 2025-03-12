@@ -1,8 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Button } from '../ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '../ui/card'
 import { FaMicrophone, FaStopCircle, FaVolumeUp } from 'react-icons/fa'
 
 interface SpeechToTextProps {
@@ -11,6 +9,28 @@ interface SpeechToTextProps {
   showVisualFeedback?: boolean
   autoStart?: boolean
   language?: string
+}
+
+// Definindo tipos para SpeechRecognition para evitar erros de TypeScript
+interface SpeechRecognitionResult {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionAlternative {
+  [index: number]: SpeechRecognitionResult;
+  length: number;
+  isFinal?: boolean;
+}
+
+interface SpeechRecognitionResultList {
+  [index: number]: SpeechRecognitionAlternative;
+  length: number;
+}
+
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
 }
 
 export const SpeechToText = ({ onTranscript, isListening }: SpeechToTextProps) => {
@@ -30,13 +50,20 @@ export const SpeechToText = ({ onTranscript, isListening }: SpeechToTextProps) =
     recognition.continuous = true
     recognition.interimResults = true
     
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map(result => result[0])
-        .map(result => result.transcript)
-        .join('')
+    recognition.onresult = (event: any) => {
+      let fullTranscript = '';
       
-      onTranscript(transcript)
+      // Usando um método mais simples e seguro para evitar erros de TypeScript
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i]) {
+          const result = event.results[i][0];
+          if (result && result.transcript) {
+            fullTranscript += result.transcript;
+          }
+        }
+      }
+      
+      onTranscript(fullTranscript)
     }
     
     recognition.start()
@@ -161,29 +188,29 @@ export function SpeechToTextComponent({
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+    <div className="card w-full bg-base-100">
+      <div className="card-header">
+        <h2 className="card-title flex items-center gap-2">
           <FaVolumeUp className="h-5 w-5" />
           Reconhecimento de Voz
-        </CardTitle>
-        <CardDescription>
+        </h2>
+        <p className="text-base-content/70">
           Fale claramente para que seu texto seja reconhecido
-        </CardDescription>
-      </CardHeader>
+        </p>
+      </div>
       
-      <CardContent>
+      <div className="card-body">
         {errorMessage && (
-          <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+          <div className="mb-4 p-3 bg-error/10 text-error rounded-md text-sm">
             {errorMessage}
           </div>
         )}
 
         {showVisualFeedback && (
-          <div className="relative mb-4 p-4 bg-muted rounded-md min-h-[100px] max-h-[300px] overflow-auto">
+          <div className="relative mb-4 p-4 bg-base-200 rounded-md min-h-[100px] max-h-[300px] overflow-auto">
             <p className="whitespace-pre-wrap break-words">
               {transcript}
-              <span className="text-muted-foreground">{interimTranscript}</span>
+              <span className="text-base-content/70">{interimTranscript}</span>
             </p>
             {isListening && (
               <span className="absolute right-4 top-4 h-3 w-3 rounded-full bg-primary animate-pulse" />
@@ -192,10 +219,9 @@ export function SpeechToTextComponent({
         )}
 
         <div className="flex flex-wrap gap-2">
-          <Button 
-            variant={isListening ? "destructive" : "default"}
+          <button 
+            className={`btn ${isListening ? "btn-error" : "btn-primary"} flex items-center gap-2`}
             onClick={toggleListening}
-            className="flex items-center gap-2"
           >
             {isListening ? (
               <>
@@ -208,19 +234,19 @@ export function SpeechToTextComponent({
                 Começar a Escutar
               </>
             )}
-          </Button>
+          </button>
           
           {transcript && (
-            <Button variant="outline" onClick={resetTranscript}>
+            <button className="btn btn-outline" onClick={resetTranscript}>
               Limpar Texto
-            </Button>
+            </button>
           )}
         </div>
-      </CardContent>
+      </div>
       
-      <CardFooter className="text-sm text-muted-foreground">
+      <div className="card-footer text-sm text-base-content/70">
         {isListening ? "Escutando..." : "Clique em 'Começar a Escutar' e fale"}
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   )
 }

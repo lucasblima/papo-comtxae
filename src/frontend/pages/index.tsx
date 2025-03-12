@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { VoiceVisualization } from '../components/VoiceVisualization';
+import { VoiceVisualization } from '../components/speech/VoiceVisualization';
 import { ThemeToggle } from '../components/ui';
 import { useSession, signOut } from 'next-auth/react';
 

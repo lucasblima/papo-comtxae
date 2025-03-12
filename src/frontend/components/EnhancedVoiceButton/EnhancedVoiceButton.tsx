@@ -1,82 +1,69 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FaMicrophone } from 'react-icons/fa';
-
-export interface EnhancedVoiceButtonProps {
-  /** Whether the button is currently recording */
-  isRecording: boolean;
-  /** Click handler for the button */
-  onClick: () => void;
-  /** Whether the button is disabled */
-  disabled?: boolean;
-  /** Optional class name for styling */
-  className?: string;
-}
+import { VoiceVisualization } from '../VoiceVisualization';
+import { EnhancedVoiceButtonProps } from './types';
 
 /**
- * EnhancedVoiceButton: An animated button component for voice input
+ * EnhancedVoiceButton: Voice interaction button with visual feedback
  * 
  * @example
  * <EnhancedVoiceButton 
- *   isRecording={true}
- *   onClick={() => console.log('clicked')}
+ *   isListening={isListening}
+ *   onClick={toggleListening}
+ *   size="md"
  * />
  */
 export function EnhancedVoiceButton({
-  isRecording,
+  isListening,
+  isProcessing = false,
   onClick,
-  disabled = false,
-  className = ''
-}: EnhancedVoiceButtonProps) {
+  size = 'md',
+  className = '',
+  listeningColor = '#EF4444', // red-500
+  idleColor = '#4F46E5', // indigo-600
+}: EnhancedVoiceButtonProps): React.ReactElement {
+  // Determine button dimensions based on size
+  const dimensions = {
+    sm: { button: 'w-12 h-12', icon: 'w-8 h-8', text: 'text-xs' },
+    md: { button: 'w-16 h-16', icon: 'w-12 h-12', text: 'text-sm' },
+    lg: { button: 'w-20 h-20', icon: 'w-16 h-16', text: 'text-base' }
+  }[size];
+
   return (
-    <motion.button
+    <button
       onClick={onClick}
-      disabled={disabled}
-      className={`
-        relative
-        p-4
-        rounded-full
-        bg-primary
-        text-white
-        hover:bg-primary-dark
-        focus:outline-none
-        focus:ring-2
-        focus:ring-primary
-        focus:ring-offset-2
-        disabled:opacity-50
-        disabled:cursor-not-allowed
-        ${className}
-      `}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      animate={isRecording ? {
-        scale: [1, 1.1, 1],
-        transition: {
-          duration: 1.5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }
-      } : {}}
+      disabled={isProcessing}
+      className={`relative flex items-center justify-center ${dimensions.button} rounded-full transition-all
+        ${isListening 
+          ? 'bg-red-500 hover:bg-red-600' 
+          : 'bg-indigo-500 hover:bg-indigo-600'} 
+        ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+        ${className}`}
       data-testid="enhanced-voice-button"
     >
-      <FaMicrophone className="w-6 h-6" />
-      
-      {isRecording && (
-        <motion.div
-          className="absolute inset-0 rounded-full border-4 border-primary"
-          initial={{ scale: 1, opacity: 0.5 }}
-          animate={{
-            scale: 1.5,
-            opacity: 0
-          }}
-          transition={{
-            duration: 1,
-            repeat: Infinity,
-            ease: "linear"
-          }}
+      <div className="absolute">
+        <VoiceVisualization 
+          isListening={isListening} 
+          size={size} 
+          color={isListening ? listeningColor : idleColor}
+          amplitude={isListening ? 0.8 : 0.2}
         />
-      )}
-    </motion.button>
+      </div>
+      <motion.div
+        animate={{ scale: isListening ? 1.2 : 1 }}
+        transition={{ 
+          repeat: isListening ? Infinity : 0, 
+          duration: 1,
+          repeatType: "reverse" 
+        }}
+        className={`${dimensions.icon} rounded-full flex items-center justify-center
+          ${isListening ? 'bg-red-600' : 'bg-indigo-600'}`}
+      >
+        <span className="text-white text-2xl">
+          {isListening ? '■' : '▶'}
+        </span>
+      </motion.div>
+    </button>
   );
 }
 

@@ -2,16 +2,10 @@
 export * from './ui';
 export * from './form';
 export * from './layout';
-
-// Export speech components
-export {
-  VoiceInput,
-  VoiceVisualization,
-  EnhancedVoiceButton,
-  VoiceOnboarding
-} from './speech';
+export * from './speech';
+export * from './onboarding';
 
 // Export standalone components
 export { ErrorBoundary } from './ErrorBoundary';
-export { AssociationSelection } from './AssociationSelection';
 export { ThemeToggle } from './ThemeToggle';
+// NOTE: AssociationSelection moved to onboarding category

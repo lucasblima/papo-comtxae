@@ -119,100 +119,7 @@ async def get_database():
 async def root():
     return {"status": "online", "message": "Papo Social API está funcionando!"}
 
-# Rotas para usuários
-@app.post("/users/", response_model=UserModel, status_code=status.HTTP_201_CREATED)
-async def create_user(
-    user: UserModel = Body(...),
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Cria um novo usuário"""
-    users_collection = db["users"]
-    
-    # Verifica se já existe um usuário com o mesmo email (se fornecido)
-    if user.email:
-        existing_user = await users_collection.find_one({"email": user.email})
-        if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Já existe um usuário registrado com este email"
-            )
-    
-    # Prepare user data for insertion
-    user_data = user.model_dump(exclude={"id"})
-    
-    # Insert into database
-    result = await users_collection.insert_one(user_data)
-    
-    # Get the created user
-    created_user = await users_collection.find_one({"_id": result.inserted_id})
-    created_user["id"] = str(created_user.pop("_id"))
-    
-    # Desbloqueio do achievement "Bem-vindo"
-    welcome_achievement = {
-        "id": "welcome",
-        "name": "Bem-vindo ao Papo Social!",
-        "description": "Você criou sua conta e começou sua jornada.",
-        "unlocked_at": created_user["created_at"],
-        "icon": "🎉"
-    }
-    
-    # Adiciona o achievement se não existir
-    if not any(ach.get("id") == "welcome" for ach in created_user.get("achievements", [])):
-        await users_collection.update_one(
-            {"_id": result.inserted_id},
-            {"$push": {"achievements": welcome_achievement}}
-        )
-        if "achievements" not in created_user:
-            created_user["achievements"] = []
-        created_user["achievements"].append(welcome_achievement)
-    
-    return created_user
-
-@app.get("/users/", response_model=List[UserModel])
-async def list_users(
-    role: Optional[UserRole] = None,
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Lista todos os usuários, opcionalmente filtrados por papel"""
-    users_collection = db["users"]
-    
-    # Filtro de papel
-    filter_query = {}
-    if role:
-        filter_query["role"] = role
-    
-    users = await users_collection.find(filter_query).to_list(1000)
-    for user in users:
-        user["id"] = str(user.pop("_id"))
-    
-    return users
-
-@app.get("/users/{user_id}", response_model=UserModel)
-async def get_user(
-    user_id: str,
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Obtém um usuário pelo ID"""
-    users_collection = db["users"]
-    
-    try:
-        object_id = ObjectId(user_id)
-        if (user := await users_collection.find_one({"_id": object_id})) is not None:
-            user["id"] = str(user.pop("_id"))
-            return user
-        raise HTTPException(status_code=404, detail=f"Usuário {user_id} não encontrado")
-    except Exception as e:
-        if "ObjectId" in str(e):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"ID de usuário inválido: {user_id}"
-            )
-        logger.error(f"Erro ao buscar usuário: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao buscar usuário: {str(e)}"
-        )
-
+# Special routes for voice onboarding
 @app.post("/onboarding/voice", response_model=UserModel)
 async def create_user_from_voice(
     voice_data: dict = Body(...),
@@ -278,7 +185,7 @@ async def create_user_from_voice(
     
     # Recupera o usuário criado
     created_user = await users_collection.find_one({"_id": result.inserted_id})
-    created_user["_id"] = str(created_user["_id"])
+    created_user["id"] = str(created_user.pop("_id"))
     
     # Concede a conquista de boas-vindas
     welcome_achievement = {
@@ -290,7 +197,7 @@ async def create_user_from_voice(
     }
     
     await users_collection.update_one(
-        {"_id": result.inserted_id},
+        {"_id": ObjectId(created_user["id"])},
         {"$push": {"achievements": welcome_achievement}}
     )
     
@@ -349,213 +256,21 @@ async def add_user_xp(
             }}
         )
         
-        # Se houve level up, concede uma conquista
-        if level_up:
-            level_achievement = {
-                "id": f"level_{current_level}",
-                "name": f"Nível {current_level}!",
-                "description": f"Você alcançou o nível {current_level}.",
-                "unlocked_at": datetime.now(),
-                "icon": "⭐"
-            }
-            
-            await users_collection.update_one(
-                {"_id": object_id},
-                {"$push": {"achievements": level_achievement}}
-            )
-        
-        # Retorna o usuário atualizado
+        # Busca o usuário atualizado
         updated_user = await users_collection.find_one({"_id": object_id})
-        updated_user["_id"] = str(updated_user["_id"])
-        
-        return updated_user
-        
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Formato de XP inválido"
-        )
-    except:
-        raise HTTPException(status_code=400, detail="Formato de ID de usuário inválido")
-
-@app.put("/users/{user_id}", response_model=UserModel)
-async def update_user(
-    user_id: str,
-    user_update: Dict[str, Any],
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Atualiza um usuário existente"""
-    users_collection = db["users"]
-    
-    try:
-        object_id = ObjectId(user_id)
-        user = await users_collection.find_one({"_id": object_id})
-        
-        if not user:
-            raise HTTPException(status_code=404, detail=f"Usuário {user_id} não encontrado")
-        
-        # Remover campos não atualizáveis
-        if "_id" in user_update:
-            del user_update["_id"]
-        
-        # Atualizar campos
-        update_result = await users_collection.update_one(
-            {"_id": object_id},
-            {"$set": {**user_update, "updated_at": datetime.now()}}
-        )
-        
-        if update_result.modified_count == 0:
-            return user  # Retorna o usuário original se nada foi modificado
-        
-        # Retorna o usuário atualizado
-        updated_user = await users_collection.find_one({"_id": object_id})
-        updated_user["_id"] = str(updated_user["_id"])
+        updated_user["id"] = str(updated_user.pop("_id"))
         
         return updated_user
         
     except Exception as e:
-        if "ObjectId" in str(e):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"ID de usuário inválido: {user_id}"
-            )
-        logger.error(f"Erro ao atualizar usuário: {e}")
+        logger.error(f"Erro ao adicionar XP: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao atualizar usuário: {str(e)}"
+            detail=f"Erro ao adicionar XP: {str(e)}"
         )
-
-# Rotas para residentes
-@app.post("/residents/", response_model=ResidentModel, status_code=status.HTTP_201_CREATED)
-async def create_resident(
-    resident: ResidentModel = Body(...),
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Cria um novo residente"""
-    residents_collection = db["residents"]
-    new_resident = await residents_collection.insert_one(resident.model_dump(exclude={"id"}))
-    created_resident = await residents_collection.find_one({"_id": new_resident.inserted_id})
-    created_resident["id"] = str(created_resident.pop("_id"))
-    return created_resident
-
-@app.get("/residents/", response_model=List[ResidentModel])
-async def list_residents(db: AsyncIOMotorDatabase = Depends(get_database)):
-    """Lista todos os residentes"""
-    residents_collection = db["residents"]
-    residents = await residents_collection.find().to_list(1000)
-    for resident in residents:
-        resident["id"] = str(resident.pop("_id"))
-    return residents
-
-@app.get("/residents/{resident_id}", response_model=ResidentModel)
-async def get_resident(
-    resident_id: str,
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Obtém um residente pelo ID"""
-    residents_collection = db["residents"]
-    try:
-        object_id = ObjectId(resident_id)
-        if (resident := await residents_collection.find_one({"_id": object_id})) is not None:
-            resident["id"] = str(resident.pop("_id"))
-            return resident
-        raise HTTPException(status_code=404, detail=f"Resident {resident_id} not found")
-    except Exception as e:
-        if "ObjectId" in str(e):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"ID de residente inválido: {resident_id}"
-            )
-        logger.error(f"Erro ao buscar residente: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro ao buscar residente: {str(e)}"
-        )
-
-# Rotas para solicitações
-@app.post("/requests/", response_model=RequestModel, status_code=status.HTTP_201_CREATED)
-async def create_request(
-    request: RequestModel = Body(...),
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Cria uma nova solicitação"""
-    requests_collection = db["requests"]
-    new_request = await requests_collection.insert_one(request.model_dump(exclude={"id"}))
-    created_request = await requests_collection.find_one({"_id": new_request.inserted_id})
-    created_request["_id"] = str(created_request["_id"])
-    return created_request
-
-@app.get("/requests/", response_model=List[RequestModel])
-async def list_requests(
-    status: Optional[str] = None,
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Lista solicitações, opcionalmente filtradas por status"""
-    requests_collection = db["requests"]
-    
-    # Filtro de status
-    filter_query = {}
-    if status:
-        filter_query["status"] = status
-      
-    requests = await requests_collection.find(filter_query).to_list(1000)
-    for request in requests:
-        request["_id"] = str(request["_id"])
-    return requests
-
-# Rota para processamento de comandos de voz
-@app.post("/voice-command/")
-async def process_voice_command(
-    command: dict = Body(...),
-    db: AsyncIOMotorDatabase = Depends(get_database)
-):
-    """Processa um comando de voz e retorna uma resposta"""
-    text = command.get("text", "")
-    user_id = command.get("user_id")
-    
-    # Processamento simples baseado em palavras-chave
-    # Em uma implementação real, usaríamos NLP ou integração com LLM
-    response = {"reply": "", "action": None}
-    
-    text_lower = text.lower()
-    
-    # Incrementa contador de interações de voz para o usuário, se fornecido
-    if user_id:
-        try:
-            object_id = ObjectId(user_id)
-            await db["users"].update_one(
-                {"_id": object_id},
-                {"$inc": {"voice_interactions_count": 1}}
-            )
-            
-            # Também adiciona um pouco de XP pela interação
-            await db["users"].update_one(
-                {"_id": object_id},
-                {"$inc": {"level.xp": 2}}
-            )
-        except:
-            pass  # Ignora erros de ID inválido
-    
-    # Processa o comando
-    if "listar" in text_lower and "residente" in text_lower:
-        response["reply"] = "Vou listar os residentes para você."
-        response["action"] = {"type": "navigate", "target": "/residents"}
-    elif "nova" in text_lower and ("solicitação" in text_lower or "requisição" in text_lower):
-        response["reply"] = "Vou abrir o formulário de nova solicitação."
-        response["action"] = {"type": "navigate", "target": "/requests/new"}
-    elif "perfil" in text_lower or "meus dados" in text_lower:
-        response["reply"] = "Aqui está seu perfil."
-        response["action"] = {"type": "navigate", "target": "/profile"}
-    elif "ajuda" in text_lower or "como funciona" in text_lower:
-        response["reply"] = "Vou mostrar como o Papo Social funciona."
-        response["action"] = {"type": "dialog", "content": "help_intro"}
-    else:
-        response["reply"] = "Desculpe, não entendi o comando. Pode tentar novamente?"
-    
-    return response
 
 # Adiciona os routers para diferente funcionalidades
-app.include_router(user_router)
+app.include_router(user_router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run(

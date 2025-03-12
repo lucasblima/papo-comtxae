@@ -1,6 +1,15 @@
-export * from './VoiceInput';
-export * from './EnhancedVoiceButton';
-export * from './VoiceVisualization';
-export * from './VoiceOnboarding';
-export * from './speech-to-text';
-export * from './text-to-speech';
+/**
+ * Speech Components Barrel File
+ * 
+ * This file re-exports all speech-related components from the speech directory.
+ * Import speech components from this file to avoid direct imports from component files.
+ * 
+ * Example:
+ * import { VoiceInput, VoiceVisualization, VoiceOnboarding } from './/VoiceInput';
+ */
+
+export { VoiceInput } from './VoiceInput';
+export { VoiceVisualization } from './VoiceVisualization';
+export { VoiceOnboarding } from './VoiceOnboarding';
+export { EnhancedVoiceButton } from './EnhancedVoiceButton';
+// Add other speech component exports here as they are created

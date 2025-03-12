@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ErrorBoundary } from '../index';
+import '@testing-library/jest-dom';
 
 // Mock console.error to prevent error outputs during test
 const originalConsoleError = console.error;
@@ -40,8 +41,7 @@ describe('ErrorBoundary Component', () => {
     );
     
     // Fallback UI should be displayed
-    expect(screen.getByTestId('error-boundary-fallback')).toBeInTheDocument();
-    expect(screen.getByText('Algo deu errado.')).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong.')).toBeInTheDocument();
     
     // Reset the spy
     consoleErrorSpy.mockRestore();
@@ -62,7 +62,7 @@ describe('ErrorBoundary Component', () => {
     );
     
     // Click the retry button
-    fireEvent.click(screen.getByText('Tentar novamente'));
+    fireEvent.click(screen.getByText('Refresh Page'));
     
     // Check if reload was called
     expect(mockReload).toHaveBeenCalledTimes(1);

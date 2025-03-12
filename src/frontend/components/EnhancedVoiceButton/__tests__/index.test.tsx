@@ -3,7 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { EnhancedVoiceButton } from '../index';
 
 // Mock dependencies
-jest.mock('../../VoiceVisualization', () => ({
+jest.mock('../../../components/speech/VoiceVisualization', () => ({
   VoiceVisualization: () => <div data-testid="mocked-voice-visualization" />
 }));
 

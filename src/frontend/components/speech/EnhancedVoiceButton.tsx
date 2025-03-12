@@ -1,70 +1,69 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { VoiceVisualization } from './VoiceVisualization';
+import React, { useState, useEffect, useRef } from 'react';
+import { FaMicrophone, FaStop } from 'react-icons/fa';
 
-export interface EnhancedVoiceButtonProps {
-  isListening: boolean;
-  isProcessing?: boolean;
-  onClick: () => void;
-  size?: 'sm' | 'md' | 'lg';
+interface EnhancedVoiceButtonProps {
+  onStart?: () => void;
+  onStop?: () => void;
+  onResult?: (result: string) => void;
   className?: string;
-  listeningColor?: string;
-  idleColor?: string;
+  buttonText?: string;
+  isListening?: boolean;
+  disabled?: boolean;
 }
 
 /**
- * EnhancedVoiceButton: Botão de interação por voz com feedback visual
+ * EnhancedVoiceButton: An improved voice input button with visualization and feedback
+ * 
+ * This component provides a button for initiating voice input with visual feedback
+ * during voice recording.
  */
 export function EnhancedVoiceButton({
-  isListening,
-  isProcessing = false,
-  onClick,
-  size = 'md',
+  onStart,
+  onStop,
+  onResult,
   className = '',
-  listeningColor = '#EF4444', // red-500
-  idleColor = '#4F46E5', // indigo-600
+  buttonText = 'Falar',
+  isListening = false,
+  disabled = false
 }: EnhancedVoiceButtonProps): React.ReactElement {
-  // Determine button dimensions based on size
-  const dimensions = {
-    sm: { button: 'w-12 h-12', icon: 'w-8 h-8', text: 'text-xs' },
-    md: { button: 'w-16 h-16', icon: 'w-12 h-12', text: 'text-sm' },
-    lg: { button: 'w-20 h-20', icon: 'w-16 h-16', text: 'text-base' }
-  }[size];
-
+  const [listening, setListening] = useState(isListening);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  
+  // Sync with external isListening prop
+  useEffect(() => {
+    setListening(isListening);
+  }, [isListening]);
+  
+  const handleToggleListening = () => {
+    if (disabled) return;
+    
+    const newListeningState = !listening;
+    setListening(newListeningState);
+    
+    if (newListeningState) {
+      onStart?.();
+    } else {
+      onStop?.();
+    }
+  };
+  
   return (
     <button
-      onClick={onClick}
-      disabled={isProcessing}
-      className={`relative flex items-center justify-center ${dimensions.button} rounded-full transition-all
-        ${isListening 
-          ? 'bg-red-500 hover:bg-red-600' 
-          : 'bg-indigo-500 hover:bg-indigo-600'} 
-        ${isProcessing ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-        ${className}`}
-      data-testid="voice-button"
+      ref={buttonRef}
+      className={`voice-button flex items-center justify-center gap-2 btn ${listening ? 'btn-error' : 'btn-primary'} ${className}`}
+      onClick={handleToggleListening}
+      disabled={disabled}
+      aria-label={listening ? 'Parar de gravar' : 'Começar a gravar'}
+      data-testid="enhanced-voice-button"
     >
-      <div className="absolute">
-        <VoiceVisualization 
-          isListening={isListening} 
-          size={size} 
-          color={isListening ? listeningColor : idleColor}
-          amplitude={isListening ? 0.8 : 0.2}
-        />
-      </div>
-      <motion.div
-        animate={{ scale: isListening ? 1.2 : 1 }}
-        transition={{ 
-          repeat: isListening ? Infinity : 0, 
-          duration: 1,
-          repeatType: "reverse" 
-        }}
-        className={`${dimensions.icon} rounded-full flex items-center justify-center
-          ${isListening ? 'bg-red-600' : 'bg-indigo-600'}`}
-      >
-        <span className="text-white text-2xl">
-          {isListening ? '■' : '▶'}
+      {listening ? <FaStop /> : <FaMicrophone />}
+      {buttonText}
+      {listening && (
+        <span className="relative flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
         </span>
-      </motion.div>
+      )}
     </button>
   );
 } 

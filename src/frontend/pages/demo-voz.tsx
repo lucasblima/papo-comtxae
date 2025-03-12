@@ -3,7 +3,7 @@
 import React from 'react';
 import { useState } from 'react'
 import { SpeechToText, TextToSpeech } from '../src/components/speech'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button } from '../components/ui'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, Button } from '..\components\ui/Card'
 import { FaVolumeUp, FaMicrophone } from 'react-icons/fa'
 
 export default function VoiceDemoPage() {

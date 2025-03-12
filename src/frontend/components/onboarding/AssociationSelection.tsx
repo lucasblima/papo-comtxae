@@ -127,7 +127,7 @@ export function AssociationSelection({
   };
   
   return (
-    <div className={`p-4 ${className}`}>
+    <div className={`p-4 ${className}`} data-testid="association-selection">
       <div className="max-w-3xl mx-auto bg-base-100 shadow-xl rounded-xl p-6 relative overflow-hidden">
         <div className="text-center mb-8">
           <motion.h2 
@@ -228,5 +228,4 @@ export function AssociationSelection({
   );
 }
 
-// Add default export to match index.tsx requirements
 export default AssociationSelection; 

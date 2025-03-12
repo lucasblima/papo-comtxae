@@ -31,7 +31,7 @@ interface AchievementNotificationProps {
 /**
  * Component that displays toast-style notifications for user achievements
  */
-const AchievementNotification: React.FC<AchievementNotificationProps> = ({
+export const AchievementNotification: React.FC<AchievementNotificationProps> = ({
   achievements,
   autoDismissTime = 5000,
   position = 'bottom-right',
@@ -156,4 +156,5 @@ const AchievementNotification: React.FC<AchievementNotificationProps> = ({
   return typeof document !== 'undefined' ? createPortal(toastContent, document.body) : null;
 };
 
+// Export default for convenience
 export default AchievementNotification; 

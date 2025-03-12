@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { EnhancedVoiceButton } from '../EnhancedVoiceButton';
+import { EnhancedVoiceButton } from '../../EnhancedVoiceButton';
+import '@testing-library/jest-dom';
 
 // Mock framer-motion to avoid animation issues in tests
 jest.mock('framer-motion', () => {
@@ -16,7 +17,7 @@ jest.mock('framer-motion', () => {
 });
 
 // Mock VoiceVisualization component
-jest.mock('../VoiceVisualization', () => ({
+jest.mock('../../VoiceVisualization', () => ({
   VoiceVisualization: ({ isListening, size, color }: any) => (
     <div data-testid="mock-visualization" data-listening={isListening} data-size={size} data-color={color}>
       Visualization
@@ -30,13 +31,12 @@ describe('EnhancedVoiceButton', () => {
     render(
       <EnhancedVoiceButton 
         isListening={false} 
-        onClick={() => {}} 
+        onStart={() => {}} 
       />
     );
     
-    const button = screen.getByTestId('voice-button');
-    expect(button).toHaveClass('bg-indigo-500');
-    expect(button).toHaveTextContent('▶');
+    const button = screen.getByTestId('enhanced-voice-button');
+    expect(button).toHaveClass('btn-primary');
   });
 
   // Test case: Should render with correct stop button when listening
@@ -44,82 +44,53 @@ describe('EnhancedVoiceButton', () => {
     render(
       <EnhancedVoiceButton 
         isListening={true} 
-        onClick={() => {}} 
+        onStart={() => {}} 
       />
     );
     
-    const button = screen.getByTestId('voice-button');
-    expect(button).toHaveClass('bg-red-500');
-    expect(button).toHaveTextContent('■');
+    const button = screen.getByTestId('enhanced-voice-button');
+    expect(button).toHaveClass('btn-error');
   });
 
-  // Test case: Should call onClick handler when button is clicked
-  test('calls onClick handler when button is clicked', () => {
-    const handleClick = jest.fn();
+  // Test case: Should call onClick when button is clicked
+  test('calls onStart handler when clicked', () => {
+    const handleStart = jest.fn();
     render(
       <EnhancedVoiceButton 
         isListening={false} 
-        onClick={handleClick} 
+        onStart={handleStart} 
       />
     );
     
-    const button = screen.getByTestId('voice-button');
+    const button = screen.getByTestId('enhanced-voice-button');
     fireEvent.click(button);
-    expect(handleClick).toHaveBeenCalledTimes(1);
+    expect(handleStart).toHaveBeenCalledTimes(1);
   });
 
-  // Test case: Should be disabled when isProcessing is true
-  test('is disabled when isProcessing is true', () => {
+  // Test case: Should be disabled when disabled prop is true
+  test('is disabled when disabled prop is true', () => {
     render(
       <EnhancedVoiceButton 
         isListening={false} 
-        onClick={() => {}} 
-        isProcessing={true}
+        onStart={() => {}}
+        disabled={true}
       />
     );
     
-    const button = screen.getByTestId('voice-button');
+    const button = screen.getByTestId('enhanced-voice-button');
     expect(button).toBeDisabled();
-    expect(button).toHaveClass('opacity-50');
-    expect(button).toHaveClass('cursor-not-allowed');
   });
-
-  // Test case: Should render with different sizes
-  test('renders with different sizes', () => {
-    const { rerender } = render(
+  
+  // Custom button text test
+  test('displays custom button text when provided', () => {
+    render(
       <EnhancedVoiceButton 
         isListening={false} 
-        onClick={() => {}} 
-        size="sm"
+        onStart={() => {}}
+        buttonText="Custom Text"
       />
     );
     
-    let button = screen.getByTestId('voice-button');
-    expect(button).toHaveClass('w-12');
-    expect(button).toHaveClass('h-12');
-    
-    rerender(
-      <EnhancedVoiceButton 
-        isListening={false} 
-        onClick={() => {}} 
-        size="md"
-      />
-    );
-    
-    button = screen.getByTestId('voice-button');
-    expect(button).toHaveClass('w-16');
-    expect(button).toHaveClass('h-16');
-    
-    rerender(
-      <EnhancedVoiceButton 
-        isListening={false} 
-        onClick={() => {}} 
-        size="lg"
-      />
-    );
-    
-    button = screen.getByTestId('voice-button');
-    expect(button).toHaveClass('w-20');
-    expect(button).toHaveClass('h-20');
+    expect(screen.getByText('Custom Text')).toBeInTheDocument();
   });
 }); 

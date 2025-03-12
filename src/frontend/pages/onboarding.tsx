@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { motion } from 'framer-motion';
 import { signIn, useSession } from 'next-auth/react';
-import { VoiceVisualization } from '../components/VoiceVisualization';
+import { VoiceVisualization } from '../components/speech/VoiceVisualization';
 import { AchievementNotification } from '../components/AchievementNotification';
 
 // Import SpeechRecognition types
@@ -49,7 +49,7 @@ export default function OnboardingPage() {
         
         recognition.onresult = (event) => {
           const last = event.results.length - 1;
-          const result = event.results[last]?.transcript;
+          const result = event.results[last]?.[0]?.transcript;
           if (result) {
             setTranscript(result);
           }
@@ -272,10 +272,16 @@ export default function OnboardingPage() {
               </div>
               {showAchievement && (
                 <AchievementNotification 
-                  title="Primeiro Contato" 
-                  description="Parabéns por se juntar ao Papo Social!" 
-                  icon="🎖️"
-                  onClose={() => setShowAchievement(false)}
+                  achievements={[{
+                    id: 'first-contact',
+                    name: 'Primeiro Contato',
+                    description: 'Parabéns por se juntar ao Papo Social!',
+                    icon: '🎖️',
+                    earnedAt: new Date()
+                  }]}
+                  autoDismissTime={5000}
+                  position="bottom-right"
+                  playSounds={true}
                 />
               )}
             </div>

@@ -2,86 +2,86 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 export interface VoiceVisualizationProps {
-  isListening: boolean;
-  amplitude?: number; // 0 to 1, optional amplitude value
+  /** Whether the microphone is actively listening */
+  isListening?: boolean;
+  /** The current volume level (0-100) */
+  volume?: number;
+  /** Amplitude value (0 to 1) - alternative to volume */
+  amplitude?: number;
+  /** Color of the visualization */
   color?: string;
+  /** Size of the visualization */
   size?: 'sm' | 'md' | 'lg';
+  /** Optional class name for styling */
+  className?: string;
 }
 
 /**
- * VoiceVisualization: Componente para visualização de áudio durante interação por voz
+ * VoiceVisualization: A component that provides visual feedback for voice input
+ * 
+ * @example
+ * <VoiceVisualization isListening={true} volume={50} />
+ * <VoiceVisualization isListening={true} amplitude={0.5} color="#4F46E5" />
  */
 export function VoiceVisualization({
-  isListening,
-  amplitude = 0.5, // default amplitude if not provided
-  color = '#4F46E5', // default indigo color
-  size = 'md'
+  isListening = false,
+  volume,
+  amplitude = 0.5,
+  color = '#4F46E5',
+  size = 'md',
+  className = ''
 }: VoiceVisualizationProps): React.ReactElement {
   const [bars, setBars] = useState<number[]>([]);
+  
+  // If volume is provided, convert it to amplitude (0-1 range)
+  const effectiveAmplitude = volume !== undefined 
+    ? Math.min(1, Math.max(0, volume / 100))
+    : amplitude;
   
   // Number of bars in the visualization
   const barCount = size === 'sm' ? 3 : size === 'md' ? 5 : 7;
   
   // Base size of visualization container
-  const containerSize = size === 'sm' ? 40 : size === 'md' ? 60 : 80;
+  const containerSize = size === 'sm' ? 'h-8 w-16' : size === 'md' ? 'h-12 w-24' : 'h-16 w-32';
   
-  // Generate random bar heights for animation
+  // Generate random bar heights when listening
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
     if (isListening) {
-      interval = setInterval(() => {
-        const newBars = Array.from({ length: barCount }, () => {
-          return Math.random() * amplitude;
+      const interval = setInterval(() => {
+        const newBars = Array(barCount).fill(0).map(() => {
+          return effectiveAmplitude * (0.5 + Math.random() * 0.5);
         });
         setBars(newBars);
       }, 100);
+      
+      return () => clearInterval(interval);
     } else {
       setBars(Array(barCount).fill(0.1));
+      return () => {};
     }
-    
-    // Always return a cleanup function
-    return () => {
-      if (interval) {
-        clearInterval(interval);
-      }
-    };
-  }, [isListening, amplitude, barCount]);
-
-  // Determine bar width based on size and count
-  const barWidth = Math.max(3, Math.floor((containerSize * 0.8) / barCount));
-  const barGap = Math.max(2, Math.floor(barWidth / 2));
-  const maxBarHeight = containerSize * 0.8;
-
+  }, [isListening, barCount, effectiveAmplitude]);
+  
   return (
-    <div 
-      className="flex items-center justify-center"
-      style={{ 
-        width: `${containerSize}px`, 
-        height: `${containerSize}px`,
-      }}
-      data-testid="voice-visualization"
-    >
-      <div className="flex items-end justify-center space-x-1">
-        {bars.map((height, index) => (
-          <motion.div
-            key={index}
-            animate={{ 
-              height: `${Math.max(5, height * maxBarHeight)}px` 
-            }}
-            transition={{
-              type: "spring",
-              stiffness: 300,
-              damping: 10
-            }}
-            style={{ 
-              width: `${barWidth}px`,
-              backgroundColor: color,
-              borderRadius: '2px'
-            }}
-          />
-        ))}
-      </div>
+    <div className={`flex items-end justify-center space-x-1 ${containerSize} ${className}`}>
+      {bars.map((height, index) => (
+        <motion.div
+          key={index}
+          className="bg-primary rounded-full w-1.5"
+          style={{ 
+            backgroundColor: color,
+            height: '100%',
+            transformOrigin: 'bottom'
+          }}
+          animate={{ 
+            scaleY: height,
+          }}
+          transition={{
+            type: "spring",
+            stiffness: 300,
+            damping: 30
+          }}
+        />
+      ))}
     </div>
   );
 } 

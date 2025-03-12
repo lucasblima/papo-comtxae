@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ThemeToggle } from '../components/ui';
-import { VoiceVisualization } from '../components/VoiceVisualization';
+import { VoiceVisualization } from '..\components\speech/VoiceVisualization';
 import { AchievementNotification } from '../components/AchievementNotification';
 
 // Import SpeechRecognition types
