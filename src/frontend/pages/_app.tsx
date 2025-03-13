@@ -5,7 +5,7 @@ import { SessionProvider } from 'next-auth/react';
 import type { AppProps } from 'next/app';
 import type { Session } from 'next-auth';
 import { ToastProvider } from '../components/ui/Toast';
-import { ThemeProvider } from '../components/ui/theme-provider';
+import { ThemeProvider } from '../contexts/ThemeContext';
 
 // Load Inter font
 const inter = Inter({
@@ -24,12 +24,7 @@ export default function App({
 }: AppProps<{ session: Session }>) {
   return (
     <SessionProvider session={session}>
-      <ThemeProvider
-        attribute="data-theme"
-        defaultTheme="lemonade"
-        enableSystem
-        themes={["lemonade", "forest"]}
-      >
+      <ThemeProvider defaultTheme="lemonade">
         <ToastProvider>
           <Head>
             <meta name="viewport" content="width=device-width, initial-scale=1.0" />

@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { OnboardingProvider } from '../../contexts/OnboardingContext';
 import { FaMicrophone, FaUser, FaPhone, FaCheck } from 'react-icons/fa';
 import { useOnboarding } from '../../contexts/OnboardingContext';
-import { VoiceAuthentication } from '../speech/VoiceAuthentication';
 import { VoiceInput, PhoneInput, ConfirmationInput } from './inputs';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 // Tipos de mensagens que podem aparecer na conversa
 type MessageType = 'assistant' | 'user' | 'system' | 'input';
@@ -28,6 +28,7 @@ export function ConversationalSignupFlow(): React.ReactElement {
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showTextInput, setShowTextInput] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { userData, updateUserData } = useOnboarding();
 
@@ -81,31 +82,66 @@ export function ConversationalSignupFlow(): React.ReactElement {
     }
   ];
 
-  // Efeito para iniciar a conversa
-  useEffect(() => {
-    // Inicia a fala automaticamente após 1 segundo
-    setTimeout(() => {
-      if (conversationSteps[0]?.messages) {
-        startConversation();
-        speakWelcomeMessage();
-      }
-    }, 1000);
+  // Função para sintetizar fala para uma mensagem
+  const speakMessage = useCallback((message: string) => {
+    if ('speechSynthesis' in window) {
+      // Garantir que qualquer fala anterior seja cancelada
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.lang = 'pt-BR';
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      // Pequeno delay para garantir que o browser esteja pronto
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 100);
+    }
   }, []);
 
-  // Efeito para rolar para a mensagem mais recente
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  // Função para falar a mensagem de boas-vindas
+  const speakWelcomeMessage = useCallback(() => {
+    const welcomeMessage = "Olá! Bem-vindo ao Papo Social. Como você se chama?";
+    speakMessage(welcomeMessage);
+    setHasStarted(true);
+  }, [speakMessage]);
 
   // Função para iniciar a conversa
-  const startConversation = () => {
+  const startConversation = useCallback(() => {
+    if (hasStarted) return; // Evita iniciar múltiplas vezes
+    
     setMessages([]);
+    setHasStarted(true);
+    
+    // Garantir que a fala e a conversa comecem juntas
+    speakWelcomeMessage();
+    
     setTimeout(() => {
       if (conversationSteps[0]?.messages) {
         addAssistantMessages(conversationSteps[0].messages);
       }
     }, 600);
-  };
+  }, [hasStarted, speakWelcomeMessage]);
+
+  // Efeito para iniciar a conversa automaticamente após o carregamento da página
+  useEffect(() => {
+    // Inicialização quando o componente monta
+    const timer = setTimeout(() => {
+      startConversation();
+    }, 500); // Pequeno delay para garantir que o componente esteja completamente montado
+    
+    return () => clearTimeout(timer);
+  }, [startConversation]);
+
+  // Efeito para rolar para a mensagem mais recente
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Função para adicionar mensagens do assistente com efeito de digitação
   const addAssistantMessages = (messageContents: any[], index = 0) => {
@@ -284,11 +320,14 @@ export function ConversationalSignupFlow(): React.ReactElement {
   const proceedToNextStep = () => {
     const nextStep = currentStep + 1;
     
-    if (nextStep < conversationSteps.length && conversationSteps[nextStep]?.messages) {
-      setCurrentStep(nextStep);
-      setTimeout(() => {
-        addAssistantMessages(conversationSteps[nextStep].messages);
-      }, 800);
+    if (nextStep < conversationSteps.length && conversationSteps[nextStep]) {
+      const nextStepMessages = conversationSteps[nextStep].messages;
+      if (nextStepMessages) {
+        setCurrentStep(nextStep);
+        setTimeout(() => {
+          addAssistantMessages(nextStepMessages);
+        }, 800);
+      }
     }
   };
 
@@ -297,39 +336,33 @@ export function ConversationalSignupFlow(): React.ReactElement {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Sintetizar fala para uma mensagem
-  const speakMessage = (message: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.lang = 'pt-BR';
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      
-      window.speechSynthesis.speak(utterance);
+  // Botão de iniciar manualmente (para caso a inicialização automática falhe)
+  const renderStartButton = () => {
+    if (messages.length === 0 && !isTyping) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center bg-base-100 bg-opacity-80 z-10">
+          <button 
+            className="btn btn-primary btn-lg"
+            onClick={startConversation}
+          >
+            Começar Agora
+          </button>
+        </div>
+      );
     }
-  };
-
-  // Função para falar a mensagem de boas-vindas
-  const speakWelcomeMessage = () => {
-    const welcomeMessage = "Olá! Sou o assistente do Papo Social. Toque em qualquer lugar da tela ou use sua voz para começar seu cadastro.";
-    speakMessage(welcomeMessage);
+    return null;
   };
 
   return (
     <OnboardingProvider>
-      <div className="card w-full max-w-md bg-base-100 shadow-xl h-[600px] flex flex-col">
+      <div className="card w-full max-w-md bg-base-100 shadow-xl h-[600px] flex flex-col relative">
         <div className="card-body flex-grow flex flex-col p-0">
-          <header className="p-4 bg-primary text-primary-content rounded-t-xl">
-            <h1 className="text-2xl font-bold">
+          <header className="p-4 bg-primary text-primary-content rounded-t-xl relative">
+            <h1 className="text-2xl font-bold flex items-center">
               Papo Social
               {isSpeaking && <span className="ml-2 inline-block animate-pulse">🔊</span>}
             </h1>
+            <ThemeToggle className="absolute right-4 top-4" />
           </header>
           
           <div className="flex-grow overflow-y-auto p-4">
@@ -387,6 +420,8 @@ export function ConversationalSignupFlow(): React.ReactElement {
             <div ref={messagesEndRef} />
           </div>
         </div>
+        
+        {renderStartButton()}
       </div>
     </OnboardingProvider>
   );

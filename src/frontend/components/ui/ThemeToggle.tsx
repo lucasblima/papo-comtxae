@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
 import { FaSun, FaMoon } from 'react-icons/fa';
-import { useTheme } from 'next-themes';
+import { useThemeContext } from '../../contexts/ThemeContext';
 
 export interface ThemeToggleProps {
   /** Optional class name for styling */
@@ -8,55 +8,22 @@ export interface ThemeToggleProps {
 }
 
 /**
- * ThemeToggle: A button component that toggles between Lemonade (light) and Forest (dark) themes
- * using DaisyUI's theme system and next-themes.
+ * ThemeToggle: Um componente para alternar entre temas claro e escuro
  * 
  * @example
- * <ThemeToggle className="my-custom-class" />
+ * <ThemeToggle className="absolute top-4 right-4" />
  */
-export function ThemeToggle({
-  className = '',
-}: ThemeToggleProps): React.ReactElement {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+export function ThemeToggle({ className = '' }: ThemeToggleProps): React.ReactElement {
+  const { theme, toggleTheme } = useThemeContext();
   
-  // Ensure hydration completes before showing theme-specific content
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  
-  // Render a placeholder with consistent dimensions during SSR and initial client render
-  if (!mounted) {
-    return (
-      <button 
-        className={`btn btn-ghost btn-circle ${className}`}
-        aria-label="Loading theme toggle"
-      >
-        <div className="h-5 w-5" />
-      </button>
-    );
-  }
-  
-  const toggleTheme = () => {
-    setTheme(resolvedTheme === 'lemonade' ? 'forest' : 'lemonade');
-  };
-
-  // Only render theme-specific content after hydration
-  const isDark = resolvedTheme !== 'lemonade';
-  const Icon = isDark ? FaSun : FaMoon;
-  const iconTitle = `Switch to ${isDark ? 'Lemonade' : 'Forest'} theme`;
-
   return (
     <button
-      className={`btn btn-ghost btn-circle ${className}`}
       onClick={toggleTheme}
-      aria-label={iconTitle}
+      className={`btn btn-circle btn-sm ${className}`}
+      aria-label={theme === 'lemonade' ? 'Mudar para tema escuro' : 'Mudar para tema claro'}
       data-testid="theme-toggle"
     >
-      <Icon 
-        className={`h-5 w-5 ${isDark ? 'text-yellow-400' : 'text-gray-700'}`}
-        title={iconTitle}
-      />
+      {theme === 'lemonade' ? <FaMoon /> : <FaSun />}
     </button>
   );
 } 
