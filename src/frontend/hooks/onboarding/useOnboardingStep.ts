@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { OnboardingStep } from '../../types/onboarding';
 
 export interface Step {
-  id: string;
+  id: OnboardingStep;
   title: string;
   instruction: string;
   placeholder?: string;
@@ -38,31 +39,62 @@ export const defaultSteps: Step[] = [
   }
 ];
 
-export function useOnboardingStep(initialStep = 0, steps = defaultSteps) {
-  const [currentStep, setCurrentStep] = useState(initialStep);
+/**
+ * Hook para gerenciar as etapas do processo de onboarding
+ * 
+ * @param initialStepIndex - Índice da etapa inicial (padrão: 0)
+ * @param steps - Array de etapas personalizado (padrão: defaultSteps)
+ */
+export function useOnboardingStep(initialStepIndex = 0, steps = defaultSteps) {
+  const [currentStep, setCurrentStep] = useState(initialStepIndex);
   
+  /**
+   * Avança para a próxima etapa
+   */
   const goToNextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
   };
   
+  /**
+   * Retorna para a etapa anterior
+   */
   const goToPreviousStep = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
   };
   
+  /**
+   * Vai para uma etapa específica pelo índice
+   */
   const goToStep = (step: number) => {
     if (step >= 0 && step < steps.length) {
       setCurrentStep(step);
     }
   };
   
+  /**
+   * Define a etapa inicial pelo ID
+   */
+  const setInitialStep = (stepId: OnboardingStep) => {
+    const stepIndex = steps.findIndex(step => step.id === stepId);
+    if (stepIndex !== -1) {
+      setCurrentStep(stepIndex);
+    }
+  };
+  
+  /**
+   * Reinicia o processo voltando para a primeira etapa
+   */
   const resetSteps = () => {
     setCurrentStep(0);
   };
   
+  /**
+   * Retorna a etapa atual
+   */
   const getCurrentStep = () => steps[currentStep];
   
   const isFirstStep = currentStep === 0;
@@ -75,6 +107,7 @@ export function useOnboardingStep(initialStep = 0, steps = defaultSteps) {
     goToNextStep,
     goToPreviousStep,
     goToStep,
+    setInitialStep,
     resetSteps,
     isFirstStep,
     isLastStep

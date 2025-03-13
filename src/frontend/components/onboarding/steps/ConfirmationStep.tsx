@@ -4,24 +4,36 @@ import { useAudioVisualization } from '../../../hooks/speech/useAudioVisualizati
 import { OnboardingService } from '../../../services/onboardingService';
 import { Step } from '../../../hooks/onboarding/useOnboardingStep';
 import { EnhancedVoiceVisualizer } from '../../speech/EnhancedVoiceVisualizer';
+import { UserData } from '../../../types/onboarding';
+import { FaArrowLeft, FaCheck, FaTimes } from 'react-icons/fa';
+import { BaseStepProps } from './StepProps';
 
-interface ConfirmationStepProps {
-  step: Step;
-  userData: {
-    name: string;
-    phone: string;
-  };
+/**
+ * Props específicas para o componente ConfirmationStep
+ */
+export interface ConfirmationStepProps extends BaseStepProps {
+  /** Dados do usuário coletados nas etapas anteriores */
+  userData: UserData;
+  /** Callback chamado quando a confirmação é concluída */
   onComplete: () => void;
+  /** Callback para voltar à etapa anterior */
   onBack: () => void;
 }
 
-export function ConfirmationStep({
-  step,
-  userData,
-  onComplete,
+/**
+ * Componente para a etapa de confirmação de dados
+ * 
+ * Exibe os dados coletados e solicita confirmação do usuário.
+ */
+export function ConfirmationStep({ 
+  step, 
+  userData, 
+  onComplete, 
   onBack,
+  context = 'landing',
+  themeVariant = 'default'
 }: ConfirmationStepProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const {
     isRecording,
@@ -44,24 +56,24 @@ export function ConfirmationStep({
   const handleStopRecording = async () => {
     stopRecording();
     if (transcript) {
-      setIsProcessing(true);
+      setIsLoading(true);
       const result = await OnboardingService.processTranscript(transcript);
       if (result.success) {
         const response = await OnboardingService.createUser(userData);
         if (response) {
-          setIsProcessing(false);
+          setIsLoading(false);
           onComplete();
         } else {
-          setIsProcessing(false);
+          setIsLoading(false);
         }
       } else {
-        setIsProcessing(false);
+        setIsLoading(false);
       }
     }
   };
 
   // Determinar o estado da visualização
-  const visualizerState = isProcessing 
+  const visualizerState = isLoading 
     ? 'processing' 
     : isRecording 
       ? 'listening' 
@@ -73,58 +85,101 @@ export function ConfirmationStep({
     .replace('{name}', userData.name)
     .replace('{phone}', userData.phone);
 
+  // Ajusta estilos com base no contexto e tema
+  const getContainerClasses = () => {
+    let classes = "flex flex-col items-center w-full";
+    
+    if (context === 'dedicated-page') {
+      classes += ' min-h-[250px]';
+    }
+    
+    if (themeVariant === 'expanded') {
+      classes += ' max-w-2xl mx-auto';
+    } else if (themeVariant === 'minimal') {
+      classes += ' p-2';
+    } else {
+      classes += ' p-4';
+    }
+    
+    return classes;
+  };
+  
+  // Ajusta estilos para o card de dados
+  const getCardClasses = () => {
+    let classes = "bg-base-200 rounded-lg p-6 w-full mt-6";
+    
+    if (themeVariant === 'expanded') {
+      classes += ' max-w-lg mx-auto shadow-lg';
+    } else if (themeVariant === 'minimal') {
+      classes += ' p-4';
+    }
+    
+    return classes;
+  };
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    try {
+      await onComplete();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center space-y-6 p-6">
-      <h2 className="text-2xl font-bold text-gray-800">{step.title}</h2>
-      <p className="text-gray-600 text-center">{step.instruction}</p>
-
-      <div className="w-full max-w-md bg-white rounded-lg shadow p-6 space-y-4">
-        <div className="space-y-2">
-          <p className="text-gray-600">Nome:</p>
-          <p className="text-gray-800 font-medium">{userData.name}</p>
-        </div>
-        <div className="space-y-2">
-          <p className="text-gray-600">Telefone:</p>
-          <p className="text-gray-800 font-medium">{userData.phone}</p>
-        </div>
+    <div className={getContainerClasses()}>
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">{step.title}</h2>
+        <p className="text-gray-600 mt-2">{step.instruction}</p>
       </div>
-
-      <div className="flex flex-col items-center space-y-4 w-full">
-        {/* Visualizador de voz aprimorado */}
-        <EnhancedVoiceVisualizer 
-          state={visualizerState}
-          volume={audioVolume}
-          visualizationType="fluid"
-          className="mb-4"
-        />
-
-        <div className="flex justify-center gap-4">
-          <button
+      
+      <div className={getCardClasses()}>
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-4">Confira seus dados:</h3>
+          
+          <div className="space-y-4">
+            <div className="flex justify-between items-center border-b pb-2">
+              <span className="text-gray-600">Nome:</span>
+              <span className="font-medium">{userData.name}</span>
+            </div>
+            
+            <div className="flex justify-between items-center border-b pb-2">
+              <span className="text-gray-600">Telefone:</span>
+              <span className="font-medium">{userData.phone}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-between mt-6">
+          <button 
+            type="button" 
             onClick={onBack}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
-            disabled={isProcessing}
+            className="btn btn-outline gap-2"
+            disabled={isLoading}
           >
-            Voltar
+            <FaArrowLeft /> Voltar
           </button>
           
-          <button
-            onClick={isRecording ? handleStopRecording : handleStartRecording}
-            className={`px-6 py-3 rounded-full font-medium transition-all ${
-              isRecording
-                ? 'bg-red-500 hover:bg-red-600 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-            disabled={isProcessing}
-          >
-            {isProcessing ? 'Processando...' : isRecording ? 'Parar Gravação' : 'Confirmar com Voz'}
-          </button>
-        </div>
-
-        {transcript && (
-          <div className="w-full max-w-md p-4 bg-gray-100 rounded-lg mt-4">
-            <p className="text-gray-800">{transcript}</p>
+          <div className="space-x-2">
+            <button 
+              type="button" 
+              onClick={onBack}
+              className="btn btn-outline btn-error gap-2"
+              disabled={isLoading}
+            >
+              <FaTimes /> Corrigir
+            </button>
+            
+            <button 
+              type="button" 
+              onClick={handleConfirm}
+              className={`btn btn-success gap-2 ${isLoading ? 'loading' : ''}`}
+              disabled={isLoading}
+            >
+              <FaCheck /> Confirmar
+            </button>
           </div>
-        )}
+        </div>
       </div>
 
       <p className="text-sm text-gray-500 text-center">{voicePrompt}</p>

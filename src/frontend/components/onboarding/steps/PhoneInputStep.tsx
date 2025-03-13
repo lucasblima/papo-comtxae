@@ -1,157 +1,127 @@
-import React, { useState, ChangeEvent } from 'react';
-import { usePhoneValidation } from '../../../hooks/form/usePhoneValidation';
+import React, { useState } from 'react';
 import { Step } from '../../../hooks/onboarding/useOnboardingStep';
-import { useSpeechRecognition } from '../../../hooks/speech/useSpeechRecognition';
-import { useAudioVisualization } from '../../../hooks/speech/useAudioVisualization';
-import { EnhancedVoiceVisualizer } from '../../speech/EnhancedVoiceVisualizer';
+import PhoneInput from 'react-phone-number-input/input';
+import { isPossiblePhoneNumber } from 'react-phone-number-input';
+import { FaArrowLeft } from 'react-icons/fa';
+import { BaseStepProps } from './StepProps';
 
-interface PhoneInputStepProps {
-  step: Step;
+/**
+ * Props específicas para o componente PhoneInputStep
+ */
+export interface PhoneInputStepProps extends BaseStepProps {
+  /** Callback chamado quando o telefone é coletado com sucesso */
   onComplete: (phone: string) => void;
+  /** Callback para voltar à etapa anterior */
   onBack: () => void;
 }
 
-export function PhoneInputStep({ step, onComplete, onBack }: PhoneInputStepProps) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+/**
+ * Componente para a etapa de coleta de telefone
+ * 
+ * Permite ao usuário inserir seu número de telefone para autenticação.
+ */
+export function PhoneInputStep({ 
+  step, 
+  onComplete, 
+  onBack,
+  context = 'landing',
+  themeVariant = 'default' 
+}: PhoneInputStepProps) {
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
   
-  const {
-    phoneNumber,
-    phoneError,
-    validatePhoneNumber,
-    handlePhoneChange,
-  } = usePhoneValidation();
-
-  const { startRecording, stopRecording } = useSpeechRecognition({
-    onRecognitionEnd: (transcript) => {
-      // Extrair apenas os números do texto reconhecido
-      const numbersOnly = transcript.replace(/\D/g, '');
-      
-      // Formatar como número de telefone brasileiro
-      let formattedNumber = '';
-      
-      if (numbersOnly.length > 0) {
-        if (numbersOnly.length <= 2) {
-          formattedNumber = `(${numbersOnly}`;
-        } else if (numbersOnly.length <= 7) {
-          formattedNumber = `(${numbersOnly.slice(0, 2)}) ${numbersOnly.slice(2)}`;
-        } else {
-          formattedNumber = `(${numbersOnly.slice(0, 2)}) ${numbersOnly.slice(2, 7)}-${numbersOnly.slice(7, 11)}`;
-        }
-      }
-      
-      // Criar um evento sintético para simular a mudança no input
-      const syntheticEvent = {
-        target: {
-          value: formattedNumber
-        }
-      } as ChangeEvent<HTMLInputElement>;
-      
-      handlePhoneChange(syntheticEvent);
-      setIsProcessing(false);
-    }
-  });
-
-  const { audioVolume } = useAudioVisualization(isRecording);
-
-  const handleStartRecording = () => {
-    setIsRecording(true);
-    startRecording();
-  };
-
-  const handleStopRecording = () => {
-    stopRecording();
-    setIsRecording(false);
-    setIsProcessing(true);
-  };
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (validatePhoneNumber(phoneNumber)) {
-      onComplete(phoneNumber);
+    
+    // Validar número de telefone
+    if (!phone) {
+      setError('Por favor, informe seu telefone.');
+      return;
     }
+    
+    if (!isPossiblePhoneNumber(phone)) {
+      setError('Número de telefone inválido. Por favor, verifique.');
+      return;
+    }
+    
+    // Limpar erro se tudo estiver ok
+    setError('');
+    onComplete(phone);
   };
-
-  // Determinar o estado do visualizador
-  let visualizerState: 'ready' | 'listening' | 'processing' | 'response-ready' = 'ready';
-  if (isRecording) {
-    visualizerState = 'listening';
-  } else if (isProcessing) {
-    visualizerState = 'processing';
-  }
-
+  
+  // Ajusta estilos com base no contexto e tema
+  const getContainerClasses = () => {
+    let classes = "flex flex-col items-center w-full";
+    
+    if (context === 'dedicated-page') {
+      classes += ' min-h-[200px]';
+    }
+    
+    if (themeVariant === 'expanded') {
+      classes += ' max-w-2xl mx-auto';
+    } else if (themeVariant === 'minimal') {
+      classes += ' p-2';
+    } else {
+      classes += ' p-4';
+    }
+    
+    return classes;
+  };
+  
+  // Ajusta estilos do formulário
+  const getFormClasses = () => {
+    let classes = "w-full mt-6";
+    
+    if (themeVariant === 'expanded') {
+      classes += ' max-w-lg mx-auto';
+    }
+    
+    return classes;
+  };
+  
   return (
-    <div className="flex flex-col items-center space-y-6 p-6">
-      <h2 className="text-2xl font-bold text-gray-800">{step.title}</h2>
-      <p className="text-gray-600 text-center">{step.instruction}</p>
-
-      <div className="w-full max-w-md flex flex-col items-center mb-4">
-        <EnhancedVoiceVisualizer 
-          state={visualizerState}
-          volume={audioVolume}
-          visualizationType="bars"
-          className="h-20 w-full"
-        />
-        
-        <div className="mt-4 flex justify-center space-x-4">
-          {!isRecording ? (
-            <button
-              type="button"
-              onClick={handleStartRecording}
-              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center"
-              disabled={isProcessing}
-            >
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 2a3 3 0 00-3 3v4a3 3 0 006 0V5a3 3 0 00-3-3z"></path>
-                <path d="M5 10v1a5 5 0 0010 0v-1a1 1 0 112 0v1a7 7 0 01-7 7h0a7 7 0 01-7-7v-1a1 1 0 012 0z"></path>
-              </svg>
-              Falar telefone
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleStopRecording}
-              className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 flex items-center"
-            >
-              <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1zm4 0a1 1 0 00-1 1v4a1 1 0 002 0V8a1 1 0 00-1-1z" clipRule="evenodd"></path>
-              </svg>
-              Parar
-            </button>
-          )}
-        </div>
+    <div className={getContainerClasses()}>
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-800">{step.title}</h2>
+        <p className="text-gray-600 mt-2">{step.instruction}</p>
       </div>
-
-      <form onSubmit={handleSubmit} className="w-full max-w-md space-y-4">
-        <div className="flex flex-col space-y-2">
-          <input
-            type="tel"
-            value={phoneNumber}
-            onChange={handlePhoneChange}
-            placeholder="(99) 99999-9999"
-            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-              phoneError
-                ? 'border-red-500 focus:ring-red-200'
-                : 'border-gray-300 focus:ring-blue-200'
-            }`}
-          />
-          {phoneError && (
-            <p className="text-sm text-red-500">{phoneError}</p>
+      
+      <form onSubmit={handleSubmit} className={getFormClasses()}>
+        <div className="form-control">
+          <label className="label">
+            <span className="label-text">Número de telefone</span>
+          </label>
+          
+          <div className="flex">
+            <PhoneInput
+              country="BR"
+              value={phone}
+              onChange={setPhone as any}
+              placeholder="(11) 98765-4321"
+              className="input input-bordered w-full"
+            />
+          </div>
+          
+          {error && (
+            <label className="label">
+              <span className="label-text-alt text-error">{error}</span>
+            </label>
           )}
         </div>
-
-        <div className="flex justify-between space-x-4">
-          <button
-            type="button"
+        
+        <div className="flex justify-between mt-6">
+          <button 
+            type="button" 
             onClick={onBack}
-            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+            className="btn btn-outline gap-2"
           >
-            Voltar
+            <FaArrowLeft /> Voltar
           </button>
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-            disabled={isProcessing}
+          
+          <button 
+            type="submit" 
+            className="btn btn-primary"
+            disabled={!phone}
           >
             Continuar
           </button>

@@ -1,6 +1,6 @@
-import React from 'react';
-import { FaSun, FaTree } from "react-icons/fa";
-import { useTheme } from "next-themes";
+import { useEffect, useState } from 'react';
+import { FaSun, FaMoon } from 'react-icons/fa';
+import { useTheme } from 'next-themes';
 
 export interface ThemeToggleProps {
   /** Optional class name for styling */
@@ -17,24 +17,46 @@ export interface ThemeToggleProps {
 export function ThemeToggle({
   className = '',
 }: ThemeToggleProps): React.ReactElement {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  // Ensure hydration completes before showing theme-specific content
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  // Render a placeholder with consistent dimensions during SSR and initial client render
+  if (!mounted) {
+    return (
+      <button 
+        className={`btn btn-ghost btn-circle ${className}`}
+        aria-label="Loading theme toggle"
+      >
+        <div className="h-5 w-5" />
+      </button>
+    );
+  }
   
   const toggleTheme = () => {
-    setTheme(theme === "lemonade" ? "forest" : "lemonade");
+    setTheme(resolvedTheme === 'lemonade' ? 'forest' : 'lemonade');
   };
+
+  // Only render theme-specific content after hydration
+  const isDark = resolvedTheme !== 'lemonade';
+  const Icon = isDark ? FaSun : FaMoon;
+  const iconTitle = `Switch to ${isDark ? 'Lemonade' : 'Forest'} theme`;
 
   return (
     <button
-      className={`btn btn-circle ${className}`}
+      className={`btn btn-ghost btn-circle ${className}`}
       onClick={toggleTheme}
-      aria-label={`Switch to ${theme === "lemonade" ? "Forest" : "Lemonade"} theme`}
+      aria-label={iconTitle}
       data-testid="theme-toggle"
     >
-      {theme === "forest" ? (
-        <FaSun className="h-5 w-5 text-yellow-400" title="Switch to Lemonade theme" />
-      ) : (
-        <FaTree className="h-5 w-5 text-green-600" title="Switch to Forest theme" />
-      )}
+      <Icon 
+        className={`h-5 w-5 ${isDark ? 'text-yellow-400' : 'text-gray-700'}`}
+        title={iconTitle}
+      />
     </button>
   );
 } 
