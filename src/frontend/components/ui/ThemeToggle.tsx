@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaMoon, FaSun } from "react-icons/fa";
+import { FaSun, FaTree } from "react-icons/fa";
 import { useTheme } from "next-themes";
 
 export interface ThemeToggleProps {
@@ -8,7 +8,7 @@ export interface ThemeToggleProps {
 }
 
 /**
- * ThemeToggle: A button component that toggles between light and dark themes
+ * ThemeToggle: A button component that toggles between Lemonade (light) and Forest (dark) themes
  * using DaisyUI's theme system and next-themes.
  * 
  * @example
@@ -18,18 +18,22 @@ export function ThemeToggle({
   className = '',
 }: ThemeToggleProps): React.ReactElement {
   const { theme, setTheme } = useTheme();
+  
+  const toggleTheme = () => {
+    setTheme(theme === "lemonade" ? "forest" : "lemonade");
+  };
 
   return (
     <button
-      className={`btn btn-ghost btn-circle ${className}`}
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-      aria-label="Toggle theme"
+      className={`btn btn-circle ${className}`}
+      onClick={toggleTheme}
+      aria-label={`Switch to ${theme === "lemonade" ? "Forest" : "Lemonade"} theme`}
       data-testid="theme-toggle"
     >
-      {theme === "dark" ? (
-        <FaSun className="h-5 w-5" />
+      {theme === "forest" ? (
+        <FaSun className="h-5 w-5 text-yellow-400" title="Switch to Lemonade theme" />
       ) : (
-        <FaMoon className="h-5 w-5" />
+        <FaTree className="h-5 w-5 text-green-600" title="Switch to Forest theme" />
       )}
     </button>
   );

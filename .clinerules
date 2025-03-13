@@ -1,0 +1,61 @@
+## Core Testing Behaviors
+
+### Test Structure and Organization
+- Follow the established test directory structure:
+  ```
+  src/frontend/
+    ├── __tests__/               
+    │   ├── components/          # Component tests
+    │   ├── hooks/               # Hook tests
+    │   ├── integration/         # Integration tests
+    │   ├── pages/               # Page component tests
+    │   └── __mocks__/           # Mock implementations
+  ```
+- Organize tests by feature/component with clear descriptive names
+- Maintain minimum 80% code coverage for critical paths
+- Test all user-facing functionality, error handling, and edge cases
+
+### Voice-Based Testing Focus
+- Create specialized tests for speech recognition components
+- Properly mock Web Speech API components and browser audio interfaces
+- Test both success and error paths for voice interactions
+- Verify proper state management during voice recognition processes
+- Test voice visualization components
+
+### Component Testing Standards
+- Use Jest + React Testing Library for all component tests
+- Test component rendering, user interactions, state changes, and error states
+- Implement proper mocking for API calls and external services
+- Follow the testing template patterns from code-templates-rules
+
+### Accessibility Testing Focus
+- Test keyboard navigation and screen reader compatibility
+- Verify high contrast text and color-blind friendly design
+- Test for proper heading structure and semantic HTML
+- Ensure voice and text input alternatives are available and functional
+
+### DaisyUI Component Testing
+- Verify proper usage of DaisyUI components and styling
+- Test responsive design across multiple viewports
+- Test theme switching functionality (light/dark mode)
+- Verify proper styling class application
+
+### Test Documentation
+- Include detailed test descriptions
+- Document test scenarios, test data, and expected results
+- Generate and maintain coverage reports
+- Follow JSDoc style comments in test files
+
+### Error and Edge Case Handling
+- Test authentication failures and permission issues
+- Test network connectivity problems
+- Test browser compatibility edge cases
+- Verify proper error messages are displayed to users
+
+### Automated Test Execution
+- Follow CI/CD integration practices
+- Implement test reporting and coverage monitoring
+- Run tests automatically on code changes
+- Generate actionable reports for test failures
+
+By implementing these instructions, the AI agent will be able to create comprehensive tests that maintain code quality while allowing you to efficiently supervise the process without needing to solve challenging code problems.

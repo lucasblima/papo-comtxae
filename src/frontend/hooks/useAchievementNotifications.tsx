@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { AchievementNotification } from '../components/AchievementNotification/AchievementNotification';
 import { UserAchievement, AchievementTriggerEvent } from '../types/achievements';
 import achievementsService from '../services/achievements';
+import { AchievementNotification } from '@components/ui/AchievementNotification';
 
 /**
  * Hook options for configuring achievement notifications

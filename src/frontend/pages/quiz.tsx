@@ -9,6 +9,11 @@ import { AchievementNotification } from '../components/ui';
 // Import SpeechRecognition types
 import type { SpeechRecognition, SpeechRecognitionEvent } from '../types/speech-recognition.d';
 
+// Definição para o webkitAudioContext
+interface Window {
+  webkitAudioContext: typeof AudioContext;
+}
+
 interface QuizQuestion {
   id: number;
   question: string;
@@ -141,7 +146,7 @@ export default function QuizPage() {
       mediaStreamRef.current = stream;
       
       // Create audio context for volume visualization
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContextClass) {
         console.error('AudioContext not supported in this browser');
         return;
@@ -162,8 +167,8 @@ export default function QuizPage() {
           const dataArray = new Uint8Array(bufferLength);
           
           const checkVolume = () => {
-            if (analyserRef.current) {
-              analyserRef.current.getByteFrequencyData(dataArray);
+            if (isRecording) {
+              analyserRef.current?.getByteFrequencyData(dataArray);
               let sum = 0;
               
               // Calculate average volume
@@ -174,9 +179,7 @@ export default function QuizPage() {
               const avg = sum / bufferLength;
               setVolume(avg);
               
-              if (isRecording) {
-                requestAnimationFrame(checkVolume);
-              }
+              requestAnimationFrame(checkVolume);
             }
           };
           
@@ -266,7 +269,7 @@ export default function QuizPage() {
   };
   
   return (
-    <div className="min-h-screen bg-gradient-to-b from-base-200 to-base-100" data-theme="dim">
+    <div className="min-h-screen bg-gradient-to-b from-base-200 to-base-100">
       <Head>
         <title>Quiz do Papo Social</title>
         <meta name="description" content="Responda perguntas e ganhe distintivos no Papo Social" />
@@ -274,23 +277,30 @@ export default function QuizPage() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      {/* Simple header with theme toggle */}
-      <header className="p-4 flex justify-between items-center">
-        <div className="flex items-center">
-          <Link href="/" className="flex items-center">
+      {/* Navbar com theme toggle */}
+      <div className="navbar bg-base-100 shadow-sm">
+        <div className="navbar-start">
+          <Link href="/" className="btn btn-ghost normal-case text-xl">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-4l-4 4v-4z" />
             </svg>
-            <span className="text-xl font-bold">Papo Social</span>
+            <span className="hidden sm:inline font-bold">Papo Social</span>
           </Link>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="badge badge-primary gap-2">
+        <div className="navbar-center">
+          <ul className="menu menu-horizontal px-1 hidden md:flex">
+            <li><Link href="/">Início</Link></li>
+            <li><Link href="/about">Sobre</Link></li>
+            <li><Link href="/quiz" className="active">Quiz</Link></li>
+          </ul>
+        </div>
+        <div className="navbar-end">
+          <div className="badge badge-primary badge-lg gap-2 mr-2">
             {earnedBadges.length} Distintivo{earnedBadges.length !== 1 ? 's' : ''}
           </div>
           <ThemeToggle />
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-xl mx-auto">
@@ -300,112 +310,127 @@ export default function QuizPage() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -50 }}
             transition={{ duration: 0.5 }}
-            className="bg-base-100 shadow-lg rounded-lg p-6"
+            className="card bg-base-100 shadow-xl"
           >
-            <h1 className="text-2xl font-bold mb-8 text-center">
-              Pergunta {currentQuestionIndex + 1} de {questions.length}
-            </h1>
-            
-            {currentQuestion && (
-              <>
-                <h2 className="text-xl mb-6">{currentQuestion.question}</h2>
-                
-                <div className="space-y-3 mb-8">
-                  {currentQuestion.options.map((option, index) => (
-                    <div key={index} className="flex items-start">
-                      <div className="badge mr-2">{index + 1}</div>
-                      <p>{option}</p>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-            
-            {isRecording ? (
-              <div className="text-center">
-                <div className="mb-6">
-                  <VoiceVisualization volume={volume} className="h-24" />
-                </div>
-                <p className="mb-4">{transcript || "Diga sua resposta..."}</p>
-                <button 
-                  className="btn btn-outline"
-                  onClick={stopRecording}
-                >
-                  Cancelar
-                </button>
-              </div>
-            ) : (
-              <div className="text-center">
-                {result === null ? (
-                  <button 
-                    className="btn btn-primary btn-lg"
-                    onClick={startRecording}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                    </svg>
-                    Responder por voz
-                  </button>
-                ) : (
-                  <div className={`alert ${result === 'correct' ? 'alert-success' : 'alert-error'}`}>
-                    <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-                      {result === 'correct' ? (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      ) : (
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      )}
-                    </svg>
-                    <span>{result === 'correct' ? 'Correto!' : 'Incorreto! Tente novamente.'}</span>
+            <div className="card-body">
+              <h1 className="card-title text-2xl justify-center mb-4">
+                Pergunta {currentQuestionIndex + 1} de {questions.length}
+              </h1>
+              
+              <div className="divider"></div>
+              
+              {currentQuestion && (
+                <>
+                  <h2 className="text-xl mb-6 font-medium">{currentQuestion.question}</h2>
+                  
+                  <div className="space-y-3 mb-8">
+                    {currentQuestion.options.map((option, index) => (
+                      <div key={index} className="flex items-center p-2 rounded-lg hover:bg-base-200 transition-colors">
+                        <div className="badge badge-primary mr-3">{index + 1}</div>
+                        <p>{option}</p>
+                      </div>
+                    ))}
                   </div>
-                )}
+                </>
+              )}
+              
+              {isRecording ? (
+                <div className="text-center">
+                  <div className="mb-6">
+                    <VoiceVisualization volume={volume} className="h-24" />
+                  </div>
+                  <div className="chat chat-start w-full max-w-md mx-auto mb-4">
+                    <div className="chat-bubble">
+                      {transcript || "Diga sua resposta..."}
+                    </div>
+                  </div>
+                  <button 
+                    className="btn btn-outline"
+                    onClick={stopRecording}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <div className="text-center">
+                  {result === null ? (
+                    <button 
+                      className="btn btn-primary btn-lg gap-2"
+                      onClick={startRecording}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                      </svg>
+                      Responder por voz
+                    </button>
+                  ) : (
+                    <div className={`alert ${result === 'correct' ? 'alert-success' : 'alert-error'}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                        {result === 'correct' ? (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        )}
+                      </svg>
+                      <span>{result === 'correct' ? 'Correto!' : 'Incorreto! Tente novamente.'}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Progress indicator */}
+              <div className="mt-4">
+                <div className="flex justify-between mb-2">
+                  <span>Progresso</span>
+                  <span>{Math.round((currentQuestionIndex / questions.length) * 100)}%</span>
+                </div>
+                <progress 
+                  className="progress progress-primary w-full" 
+                  value={(currentQuestionIndex / questions.length) * 100} 
+                  max="100"
+                ></progress>
               </div>
-            )}
+            </div>
           </motion.div>
-          
-          {/* Progress indicator */}
-          <div className="mt-8">
-            <div className="flex justify-between mb-2">
-              <span>Progresso</span>
-              <span>{Math.round((currentQuestionIndex / questions.length) * 100)}%</span>
-            </div>
-            <div className="w-full bg-base-300 rounded-full h-2">
-              <div 
-                className="bg-primary h-2 rounded-full" 
-                style={{ width: `${(currentQuestionIndex / questions.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
           
           {/* Badges earned */}
           {earnedBadges.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-lg font-semibold mb-4">Seus Distintivos:</h2>
-              <div className="flex flex-wrap gap-3">
-                {earnedBadges.map((badge, index) => (
-                  <div key={index} className="badge badge-lg gap-2 p-4 bg-base-300">
-                    <span className="text-xl">{badge.icon}</span>
-                    {badge.title}
-                  </div>
-                ))}
+            <div className="card bg-base-100 shadow-xl mt-8">
+              <div className="card-body">
+                <h2 className="card-title">Seus Distintivos</h2>
+                <div className="flex flex-wrap gap-3 mt-2">
+                  {earnedBadges.map((badge, index) => (
+                    <div key={index} className="badge badge-lg gap-2 p-4 badge-outline">
+                      <span className="text-xl">{badge.icon}</span>
+                      {badge.title}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
         </div>
       </main>
       
-      {/* Simplified Footer */}
-      <footer className="footer footer-center p-6 bg-base-100 text-base-content">
+      {/* Improved Footer */}
+      <footer className="footer footer-center p-10 bg-base-200 text-base-content rounded">
+        <div className="grid grid-flow-col gap-4">
+          <Link href="/about" className="link link-hover">Sobre nós</Link>
+          <Link href="/contact" className="link link-hover">Contato</Link>
+          <Link href="/terms" className="link link-hover">Termos de uso</Link>
+          <Link href="/privacy" className="link link-hover">Privacidade</Link>
+        </div>
         <div>
           <p>© 2024 Papo Social - Todos os direitos reservados</p>
         </div>
       </footer>
-      
+
+      {/* Achievement Notification */}
       {showAchievement && currentQuestion && (
-        <AchievementNotification 
-          title={currentQuestion.badge.title}
+        <AchievementNotification
+          title={`Novo Distintivo: ${currentQuestion.badge.title}`}
           description={currentQuestion.badge.description}
           icon={currentQuestion.badge.icon}
-          onClose={() => setShowAchievement(false)}
         />
       )}
     </div>

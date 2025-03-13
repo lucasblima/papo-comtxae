@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSpeechRecognition } from '../../../hooks/speech/useSpeechRecognition';
 import { useAudioVisualization } from '../../../hooks/speech/useAudioVisualization';
 import { OnboardingService } from '../../../services/onboardingService';
 import { Step } from '../../../hooks/onboarding/useOnboardingStep';
+import { EnhancedVoiceVisualizer } from '../../speech/EnhancedVoiceVisualizer';
 
 interface WelcomeStepProps {
   step: Step;
@@ -10,6 +11,8 @@ interface WelcomeStepProps {
 }
 
 export function WelcomeStep({ step, onComplete }: WelcomeStepProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   const {
     isRecording,
     transcript,
@@ -31,12 +34,23 @@ export function WelcomeStep({ step, onComplete }: WelcomeStepProps) {
   const handleStopRecording = async () => {
     stopRecording();
     if (transcript) {
+      setIsProcessing(true);
       const result = await OnboardingService.processTranscript(transcript);
+      setIsProcessing(false);
       if (result.success && result.name) {
         onComplete(result.name);
       }
     }
   };
+
+  // Determinar o estado da visualização
+  const visualizerState = isProcessing 
+    ? 'processing' 
+    : isRecording 
+      ? 'listening' 
+      : transcript 
+        ? 'response-ready' 
+        : 'ready';
 
   return (
     <div className="flex flex-col items-center space-y-6 p-6">
@@ -47,29 +61,40 @@ export function WelcomeStep({ step, onComplete }: WelcomeStepProps) {
         <p className="text-sm text-gray-500 italic">{step.placeholder}</p>
       )}
 
-      <div className="flex flex-col items-center space-y-4">
-        <button
-          onClick={isRecording ? handleStopRecording : handleStartRecording}
-          className={`px-6 py-3 rounded-full font-medium transition-all ${
-            isRecording
-              ? 'bg-red-500 hover:bg-red-600 text-white'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          }`}
-        >
-          {isRecording ? 'Parar Gravação' : 'Começar Gravação'}
-        </button>
+      <div className="flex flex-col items-center space-y-4 w-full">
+        {/* Visualizador de voz aprimorado */}
+        <EnhancedVoiceVisualizer 
+          state={visualizerState}
+          volume={audioVolume}
+          visualizationType="fluid"
+          className="mb-4"
+        />
 
-        {isRecording && (
-          <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 transition-all duration-100"
-              style={{ width: `${Math.min(audioVolume * 100, 100)}%` }}
-            />
-          </div>
-        )}
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={isRecording ? handleStopRecording : handleStartRecording}
+            className={`px-6 py-3 rounded-full font-medium transition-all ${
+              isRecording
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Processando...' : isRecording ? 'Parar Gravação' : 'Começar Gravação'}
+          </button>
+
+          {transcript && !isRecording && !isProcessing && (
+            <button
+              onClick={handleStopRecording}
+              className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-full font-medium transition-all"
+            >
+              Confirmar
+            </button>
+          )}
+        </div>
 
         {transcript && (
-          <div className="w-full max-w-md p-4 bg-gray-100 rounded-lg">
+          <div className="w-full max-w-md p-4 bg-gray-100 rounded-lg mt-4">
             <p className="text-gray-800">{transcript}</p>
           </div>
         )}

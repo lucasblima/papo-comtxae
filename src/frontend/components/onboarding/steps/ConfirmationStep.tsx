@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSpeechRecognition } from '../../../hooks/speech/useSpeechRecognition';
 import { useAudioVisualization } from '../../../hooks/speech/useAudioVisualization';
 import { OnboardingService } from '../../../services/onboardingService';
 import { Step } from '../../../hooks/onboarding/useOnboardingStep';
+import { EnhancedVoiceVisualizer } from '../../speech/EnhancedVoiceVisualizer';
 
 interface ConfirmationStepProps {
   step: Step;
@@ -20,6 +21,8 @@ export function ConfirmationStep({
   onComplete,
   onBack,
 }: ConfirmationStepProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   const {
     isRecording,
     transcript,
@@ -41,15 +44,30 @@ export function ConfirmationStep({
   const handleStopRecording = async () => {
     stopRecording();
     if (transcript) {
+      setIsProcessing(true);
       const result = await OnboardingService.processTranscript(transcript);
       if (result.success) {
         const response = await OnboardingService.createUser(userData);
         if (response) {
+          setIsProcessing(false);
           onComplete();
+        } else {
+          setIsProcessing(false);
         }
+      } else {
+        setIsProcessing(false);
       }
     }
   };
+
+  // Determinar o estado da visualização
+  const visualizerState = isProcessing 
+    ? 'processing' 
+    : isRecording 
+      ? 'listening' 
+      : transcript 
+        ? 'response-ready' 
+        : 'ready';
 
   const voicePrompt = step.voicePrompt
     .replace('{name}', userData.name)
@@ -71,39 +89,42 @@ export function ConfirmationStep({
         </div>
       </div>
 
-      <div className="flex flex-col items-center space-y-4">
-        <button
-          onClick={isRecording ? handleStopRecording : handleStartRecording}
-          className={`px-6 py-3 rounded-full font-medium transition-all ${
-            isRecording
-              ? 'bg-red-500 hover:bg-red-600 text-white'
-              : 'bg-blue-500 hover:bg-blue-600 text-white'
-          }`}
-        >
-          {isRecording ? 'Parar Gravação' : 'Confirmar com Voz'}
-        </button>
+      <div className="flex flex-col items-center space-y-4 w-full">
+        {/* Visualizador de voz aprimorado */}
+        <EnhancedVoiceVisualizer 
+          state={visualizerState}
+          volume={audioVolume}
+          visualizationType="fluid"
+          className="mb-4"
+        />
 
-        {isRecording && (
-          <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-blue-500 transition-all duration-100"
-              style={{ width: `${Math.min(audioVolume * 100, 100)}%` }}
-            />
-          </div>
-        )}
+        <div className="flex justify-center gap-4">
+          <button
+            onClick={onBack}
+            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
+            disabled={isProcessing}
+          >
+            Voltar
+          </button>
+          
+          <button
+            onClick={isRecording ? handleStopRecording : handleStartRecording}
+            className={`px-6 py-3 rounded-full font-medium transition-all ${
+              isRecording
+                ? 'bg-red-500 hover:bg-red-600 text-white'
+                : 'bg-blue-500 hover:bg-blue-600 text-white'
+            }`}
+            disabled={isProcessing}
+          >
+            {isProcessing ? 'Processando...' : isRecording ? 'Parar Gravação' : 'Confirmar com Voz'}
+          </button>
+        </div>
 
         {transcript && (
-          <div className="w-full max-w-md p-4 bg-gray-100 rounded-lg">
+          <div className="w-full max-w-md p-4 bg-gray-100 rounded-lg mt-4">
             <p className="text-gray-800">{transcript}</p>
           </div>
         )}
-
-        <button
-          onClick={onBack}
-          className="px-6 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50"
-        >
-          Voltar
-        </button>
       </div>
 
       <p className="text-sm text-gray-500 text-center">{voicePrompt}</p>
