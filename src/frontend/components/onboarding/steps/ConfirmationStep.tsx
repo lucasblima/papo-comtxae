@@ -1,188 +1,94 @@
 import React, { useState } from 'react';
-import { useSpeechRecognition } from '../../../hooks/speech/useSpeechRecognition';
-import { useAudioVisualization } from '../../../hooks/speech/useAudioVisualization';
-import { OnboardingService } from '../../../services/onboardingService';
-import { Step } from '../../../hooks/onboarding/useOnboardingStep';
-import { EnhancedVoiceVisualizer } from '../../speech/EnhancedVoiceVisualizer';
-import { UserData } from '../../../types/onboarding';
-import { FaArrowLeft, FaCheck, FaTimes } from 'react-icons/fa';
-import { BaseStepProps } from './StepProps';
+import { useOnboarding } from '../../../contexts/OnboardingContext';
+import { signIn } from 'next-auth/react';
+import { StepProps } from './StepProps';
 
 /**
- * Props específicas para o componente ConfirmationStep
- */
-export interface ConfirmationStepProps extends BaseStepProps {
-  /** Dados do usuário coletados nas etapas anteriores */
-  userData: UserData;
-  /** Callback chamado quando a confirmação é concluída */
-  onComplete: () => void;
-  /** Callback para voltar à etapa anterior */
-  onBack: () => void;
-}
-
-/**
- * Componente para a etapa de confirmação de dados
+ * Confirmation Step Component
  * 
- * Exibe os dados coletados e solicita confirmação do usuário.
+ * Allows users to review and confirm their information before completing
+ * the signup process.
  */
-export function ConfirmationStep({ 
-  step, 
-  userData, 
-  onComplete, 
-  onBack,
-  context = 'landing',
-  themeVariant = 'default'
-}: ConfirmationStepProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  
-  const {
-    isRecording,
-    transcript,
-    startRecording,
-    stopRecording,
-    resetTranscript,
-  } = useSpeechRecognition({
-    continuous: false,
-    interimResults: true,
-  });
+export function ConfirmationStep({ onNext, onBack }: StepProps): React.ReactElement {
+  const { userData } = useOnboarding();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const { audioVolume } = useAudioVisualization(isRecording);
-
-  const handleStartRecording = async () => {
-    resetTranscript();
-    await startRecording();
-  };
-
-  const handleStopRecording = async () => {
-    stopRecording();
-    if (transcript) {
-      setIsLoading(true);
-      const result = await OnboardingService.processTranscript(transcript);
-      if (result.success) {
-        const response = await OnboardingService.createUser(userData);
-        if (response) {
-          setIsLoading(false);
-          onComplete();
-        } else {
-          setIsLoading(false);
-        }
-      } else {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  // Determinar o estado da visualização
-  const visualizerState = isLoading 
-    ? 'processing' 
-    : isRecording 
-      ? 'listening' 
-      : transcript 
-        ? 'response-ready' 
-        : 'ready';
-
-  const voicePrompt = step.voicePrompt
-    .replace('{name}', userData.name)
-    .replace('{phone}', userData.phone);
-
-  // Ajusta estilos com base no contexto e tema
-  const getContainerClasses = () => {
-    let classes = "flex flex-col items-center w-full";
+  // Handle account creation
+  const handleCreateAccount = async () => {
+    setIsSubmitting(true);
+    setError('');
     
-    if (context === 'dedicated-page') {
-      classes += ' min-h-[250px]';
-    }
-    
-    if (themeVariant === 'expanded') {
-      classes += ' max-w-2xl mx-auto';
-    } else if (themeVariant === 'minimal') {
-      classes += ' p-2';
-    } else {
-      classes += ' p-4';
-    }
-    
-    return classes;
-  };
-  
-  // Ajusta estilos para o card de dados
-  const getCardClasses = () => {
-    let classes = "bg-base-200 rounded-lg p-6 w-full mt-6";
-    
-    if (themeVariant === 'expanded') {
-      classes += ' max-w-lg mx-auto shadow-lg';
-    } else if (themeVariant === 'minimal') {
-      classes += ' p-4';
-    }
-    
-    return classes;
-  };
-
-  const handleConfirm = async () => {
-    setIsLoading(true);
     try {
-      await onComplete();
+      // Create account using voice authentication provider
+      const result = await signIn('voice', {
+        redirect: false,
+        name: userData.name,
+        phone: userData.phone,
+        voiceData: JSON.stringify({ timestamp: Date.now() })
+      });
+      
+      if (result?.error) {
+        setError('Ocorreu um erro ao criar sua conta. Tente novamente.');
+      } else if (result?.ok) {
+        onNext();
+      }
+    } catch (err) {
+      setError('Ocorreu um erro ao processar sua solicitação. Tente novamente.');
+      console.error('Account creation error:', err);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className={getContainerClasses()}>
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800">{step.title}</h2>
-        <p className="text-gray-600 mt-2">{step.instruction}</p>
-      </div>
+    <div className="w-full">
+      <h2 className="text-2xl font-bold mb-6">Confirme seus dados</h2>
       
-      <div className={getCardClasses()}>
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-4">Confira seus dados:</h3>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center border-b pb-2">
-              <span className="text-gray-600">Nome:</span>
-              <span className="font-medium">{userData.name}</span>
-            </div>
-            
-            <div className="flex justify-between items-center border-b pb-2">
-              <span className="text-gray-600">Telefone:</span>
-              <span className="font-medium">{userData.phone}</span>
-            </div>
-          </div>
+      <div className="bg-base-200 p-4 rounded-lg mb-6">
+        <div className="mb-3">
+          <div className="text-sm text-base-content/70">Nome</div>
+          <div className="font-medium text-lg">{userData.name}</div>
         </div>
         
-        <div className="flex justify-between mt-6">
-          <button 
-            type="button" 
-            onClick={onBack}
-            className="btn btn-outline gap-2"
-            disabled={isLoading}
-          >
-            <FaArrowLeft /> Voltar
-          </button>
-          
-          <div className="space-x-2">
-            <button 
-              type="button" 
-              onClick={onBack}
-              className="btn btn-outline btn-error gap-2"
-              disabled={isLoading}
-            >
-              <FaTimes /> Corrigir
-            </button>
-            
-            <button 
-              type="button" 
-              onClick={handleConfirm}
-              className={`btn btn-success gap-2 ${isLoading ? 'loading' : ''}`}
-              disabled={isLoading}
-            >
-              <FaCheck /> Confirmar
-            </button>
-          </div>
+        <div>
+          <div className="text-sm text-base-content/70">Telefone</div>
+          <div className="font-medium text-lg">{userData.phone}</div>
         </div>
       </div>
-
-      <p className="text-sm text-gray-500 text-center">{voicePrompt}</p>
+      
+      {error && (
+        <div className="alert alert-error mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{error}</span>
+        </div>
+      )}
+      
+      <p className="mb-6">
+        Ao clicar em "Criar conta", você concorda com nossos{' '}
+        <a href="#" className="link link-primary">Termos de Uso</a> e{' '}
+        <a href="#" className="link link-primary">Política de Privacidade</a>.
+      </p>
+      
+      <div className="flex justify-between">
+        <button 
+          className="btn btn-outline"
+          onClick={onBack}
+          disabled={isSubmitting}
+        >
+          Voltar
+        </button>
+        
+        <button 
+          className={`btn btn-primary ${isSubmitting ? 'loading' : ''}`}
+          onClick={handleCreateAccount}
+          disabled={isSubmitting}
+        >
+          Criar conta
+        </button>
+      </div>
     </div>
   );
 } 

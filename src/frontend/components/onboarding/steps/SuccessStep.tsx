@@ -1,106 +1,68 @@
-import React, { useEffect } from 'react';
-import { Step } from '../../../hooks/onboarding/useOnboardingStep';
-import { UserData } from '../../../types/onboarding';
-import { FaCheckCircle } from 'react-icons/fa';
-import { BaseStepProps } from './StepProps';
-import confetti from 'canvas-confetti';
+import React from 'react';
+import { useRouter } from 'next/router';
+import { FaCheck, FaTrophy } from 'react-icons/fa';
+import { useOnboarding } from '../../../contexts/OnboardingContext';
+import { StepProps } from './StepProps';
 
 /**
- * Props específicas para o componente SuccessStep
- */
-export interface SuccessStepProps extends BaseStepProps {
-  /** Dados do usuário coletados nas etapas anteriores */
-  userData: UserData;
-  /** Callback chamado quando a etapa de sucesso é concluída */
-  onComplete: () => void;
-}
-
-/**
- * Componente para a etapa de sucesso
+ * Success Step Component
  * 
- * Exibe uma mensagem de sucesso e opcionalmente dispara efeitos visuais.
+ * The final step in the onboarding process that confirms account creation
+ * and shows achievements to the user.
  */
-export function SuccessStep({ 
-  step, 
-  userData, 
-  onComplete,
-  context = 'landing',
-  themeVariant = 'default'
-}: SuccessStepProps) {
-  // Efeito para disparar confetti quando o componente é montado
-  useEffect(() => {
-    // Dispara confetti apenas se não estiver na variante minimal
-    if (themeVariant !== 'minimal') {
-      const duration = 3 * 1000;
-      const end = Date.now() + duration;
-
-      const frame = () => {
-        confetti({
-          particleCount: 2,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: ['#4CAF50', '#2196F3', '#FF9800']
-        });
-        
-        confetti({
-          particleCount: 2,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: ['#4CAF50', '#2196F3', '#FF9800']
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      };
-
-      frame();
-    }
-
-    // Redirecionar após 5 segundos
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Ajusta estilos com base no contexto e tema
-  const getContainerClasses = () => {
-    let classes = "flex flex-col items-center justify-center w-full text-center";
-    
-    if (context === 'dedicated-page') {
-      classes += ' min-h-[250px]';
-    }
-    
-    if (themeVariant === 'expanded') {
-      classes += ' max-w-2xl mx-auto py-8';
-    } else if (themeVariant === 'minimal') {
-      classes += ' p-2';
-    } else {
-      classes += ' p-4';
-    }
-    
-    return classes;
+export function SuccessStep({ onNext }: StepProps): React.ReactElement {
+  const router = useRouter();
+  const { userData } = useOnboarding();
+  
+  // Handle navigation to dashboard
+  const handleGoDashboard = () => {
+    router.push('/dashboard');
   };
 
   return (
-    <div className={getContainerClasses()}>
-      <FaCheckCircle className="text-success text-6xl mb-6" />
-      
-      <h2 className="text-2xl font-bold text-gray-800 mb-4">{step.title}</h2>
-      <p className="text-gray-600 mb-6">{step.instruction}</p>
-      
-      <div className="bg-base-200 rounded-lg p-6 w-full max-w-md">
-        <p className="text-lg font-medium mb-2">
-          Bem-vindo(a), {userData.name}!
-        </p>
-        <p className="text-gray-600">
-          Sua conta foi criada com sucesso. Você será redirecionado em alguns segundos...
-        </p>
+    <div className="w-full text-center">
+      <div className="flex justify-center mb-6">
+        <div className="bg-success/20 rounded-full p-4">
+          <FaCheck className="text-success w-8 h-8" />
+        </div>
       </div>
+      
+      <h2 className="text-2xl font-bold mb-4">Conta Criada com Sucesso!</h2>
+      
+      <p className="mb-8">
+        Bem-vindo ao Papo Social, {userData.name}! Sua conta foi criada e 
+        você já pode usar a plataforma.
+      </p>
+      
+      <div className="card bg-base-200 mb-8 p-6">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="badge badge-primary badge-lg p-4">
+            <FaTrophy className="mr-2" /> 100 XP
+          </div>
+          <h3 className="text-lg font-bold">Conquista desbloqueada!</h3>
+        </div>
+        
+        <div className="flex justify-center gap-4">
+          <div className="card bg-base-100 p-4 shadow-md">
+            <div className="text-3xl mb-2">🎖️</div>
+            <div className="font-medium">Primeiro Login</div>
+            <div className="text-xs text-base-content/70">Criou sua conta com sucesso</div>
+          </div>
+          
+          <div className="card bg-base-100 p-4 shadow-md">
+            <div className="text-3xl mb-2">🔊</div>
+            <div className="font-medium">Voz Reconhecida</div>
+            <div className="text-xs text-base-content/70">Usou autenticação por voz</div>
+          </div>
+        </div>
+      </div>
+      
+      <button 
+        className="btn btn-primary btn-lg w-full"
+        onClick={handleGoDashboard}
+      >
+        Ir para o Painel
+      </button>
     </div>
   );
 } 

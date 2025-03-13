@@ -14,4 +14,16 @@ export interface BaseStepProps {
   context?: OnboardingContext;
   /** Variante visual do componente */
   themeVariant?: OnboardingTheme;
+}
+
+/**
+ * Common props interface for all onboarding step components
+ */
+export interface StepProps {
+  /** Function to navigate to the next step */
+  onNext: () => void;
+  /** Function to navigate to the previous step */
+  onBack: () => void;
+  /** Additional data that can be passed to the step */
+  data?: Record<string, any>;
 } 

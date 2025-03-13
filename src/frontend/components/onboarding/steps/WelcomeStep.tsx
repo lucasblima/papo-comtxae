@@ -1,146 +1,47 @@
-import React, { useState } from 'react';
-import { useSpeechRecognition } from '../../../hooks/speech/useSpeechRecognition';
-import { useAudioVisualization } from '../../../hooks/speech/useAudioVisualization';
-import { OnboardingService } from '../../../services/onboardingService';
-import { Step } from '../../../hooks/onboarding/useOnboardingStep';
-import { EnhancedVoiceVisualizer } from '../../speech/EnhancedVoiceVisualizer';
-import { BaseStepProps } from './StepProps';
+import React from 'react';
+import { FaMicrophone } from 'react-icons/fa';
+import Link from 'next/link';
+import { StepProps } from './StepProps';
 
 /**
- * Props específicas para o componente WelcomeStep
- */
-export interface WelcomeStepProps extends BaseStepProps {
-  /** Callback chamado quando o nome é coletado com sucesso */
-  onComplete: (name: string) => void;
-}
-
-/**
- * Componente para a etapa de boas-vindas do onboarding
+ * Welcome Step Component
  * 
- * Captura o nome do usuário através de interação por voz.
+ * The first step in the onboarding process that introduces users to Papo Social.
  */
-export function WelcomeStep({ 
-  step, 
-  onComplete, 
-  context = 'landing',
-  themeVariant = 'default'
-}: WelcomeStepProps) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  
-  const {
-    isRecording,
-    transcript,
-    startRecording,
-    stopRecording,
-    resetTranscript,
-  } = useSpeechRecognition({
-    continuous: false,
-    interimResults: true,
-  });
-
-  const { audioVolume } = useAudioVisualization(isRecording);
-
-  const handleStartRecording = async () => {
-    resetTranscript();
-    await startRecording();
-  };
-
-  const handleStopRecording = async () => {
-    stopRecording();
-    if (transcript) {
-      setIsProcessing(true);
-      const result = await OnboardingService.processTranscript(transcript);
-      setIsProcessing(false);
-      if (result.success && result.name) {
-        onComplete(result.name);
-      }
-    }
-  };
-
-  // Determinar o estado da visualização
-  const visualizerState = isProcessing 
-    ? 'processing' 
-    : isRecording 
-      ? 'listening' 
-      : transcript 
-        ? 'response-ready' 
-        : 'ready';
-        
-  // Ajusta estilos com base no contexto e tema
-  const getContainerClasses = () => {
-    let classes = "flex flex-col items-center space-y-6 p-6";
-    
-    if (context === 'dedicated-page') {
-      classes += ' min-h-[200px]';
-    }
-    
-    if (themeVariant === 'expanded') {
-      classes += ' max-w-2xl mx-auto';
-    } else if (themeVariant === 'minimal') {
-      classes += ' p-4';
-    }
-    
-    return classes;
-  };
-  
-  // Ajusta o tamanho do visualizador com base no tema
-  const getVisualizerSize = () => {
-    switch (themeVariant) {
-      case 'minimal':
-        return 'h-24 w-full';
-      case 'expanded':
-        return 'h-40 w-full';
-      default:
-        return 'h-32 w-full';
-    }
-  };
-
+export function WelcomeStep({ onNext }: StepProps): React.ReactElement {
   return (
-    <div className={getContainerClasses()}>
-      <h2 className="text-2xl font-bold text-gray-800">{step.title}</h2>
-      <p className="text-gray-600 text-center">{step.instruction}</p>
-      
-      {step.placeholder && (
-        <p className="text-sm text-gray-500 italic">{step.placeholder}</p>
-      )}
-
-      <div className="flex flex-col items-center space-y-4 w-full">
-        {/* Visualizador de voz aprimorado */}
-        <EnhancedVoiceVisualizer 
-          state={visualizerState}
-          volume={audioVolume}
-          visualizationType="fluid"
-          className={`mb-4 ${getVisualizerSize()}`}
-        />
-
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={isRecording ? handleStopRecording : handleStartRecording}
-            className={`px-6 py-3 rounded-full font-medium transition-all ${
-              isRecording
-                ? 'bg-red-500 hover:bg-red-600 text-white'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
-            disabled={isProcessing}
-          >
-            {isProcessing ? 'Processando...' : isRecording ? 'Parar Gravação' : 'Começar Gravação'}
-          </button>
-
-          {transcript && !isRecording && !isProcessing && (
-            <button
-              onClick={handleStopRecording}
-              className="px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-full font-medium transition-all"
-            >
-              Confirmar
-            </button>
-          )}
+    <div className="w-full text-center">
+      <div className="flex justify-center mb-6">
+        <div className="rounded-full bg-primary/20 p-4">
+          <FaMicrophone className="text-primary w-10 h-10" />
         </div>
-
-        {transcript && (
-          <div className="w-full max-w-md p-4 bg-gray-100 rounded-lg mt-4">
-            <p className="text-gray-800">{transcript}</p>
-          </div>
-        )}
+      </div>
+      
+      <h2 className="text-2xl font-bold mb-4">Bem-vindo ao Papo Social!</h2>
+      
+      <p className="mb-6">
+        O Papo Social é uma plataforma de comunicação que usa sua voz como identidade.
+        Sem senhas complicadas, apenas você sendo você.
+      </p>
+      
+      <p className="mb-8">
+        Vamos começar criando seu perfil? Leva menos de um minuto.
+      </p>
+      
+      <div className="flex flex-col gap-4">
+        <button 
+          className="btn btn-primary btn-lg"
+          onClick={onNext}
+        >
+          Começar
+        </button>
+        
+        <p className="text-sm">
+          Já tem uma conta?{' '}
+          <Link href="/login" className="link link-primary">
+            Entrar
+          </Link>
+        </p>
       </div>
     </div>
   );

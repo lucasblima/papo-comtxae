@@ -1,9 +1,9 @@
 /**
- * Componentes do processo de onboarding
+ * Export all onboarding components
  */
-
-// Componente principal
-export { VoiceOnboarding } from './VoiceOnboarding';
+export * from './SignupFlow';
+export * from './VoiceOnboarding';
+export * from './steps';
 
 // Componentes de etapas
 export { WelcomeStep } from './steps/WelcomeStep';

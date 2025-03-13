@@ -1,0 +1,97 @@
+.mapContainer {
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+  position: relative;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.mapLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 250px;
+  background-color: #f9fafb;
+  color: #4f46e5;
+  font-weight: 500;
+}
+
+.leafletMap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* Estilo para o ícone pulsante */
+.pulseIcon {
+  background: none !important;
+  border: none !important;
+}
+
+.pulse {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #4f46e5;
+  opacity: 0.6;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  70% {
+    transform: scale(2);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
+}
+
+/* Estilo para o contorno do município */
+.municipalityHighlight:global(.municipality-highlight) {
+  fill: rgba(79, 70, 229, 0.2);
+  stroke: #4f46e5;
+  stroke-width: 2;
+  transition: all 0.3s ease;
+}
+
+.municipalityHighlight:global(.municipality-highlight:hover) {
+  fill: rgba(79, 70, 229, 0.4);
+  cursor: pointer;
+}
+
+/* Estilo do ícone personalizado do Papo Social */
+.papoSocialMarker {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #4f46e5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+.markerLogo {
+  z-index: 10;
+}
+
+.customIcon {
+  background: none !important;
+  border: none !important;
+} 
