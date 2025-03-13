@@ -1,7 +1,7 @@
 /**
  * Export all onboarding components
  */
-export * from './SignupFlow';
+export * from './ConversationalSignupFlow';
 export * from './VoiceOnboarding';
 export * from './steps';
 

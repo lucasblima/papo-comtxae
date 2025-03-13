@@ -17,6 +17,8 @@ export interface VoiceAuthenticationProps {
   prompt?: string;
   /** Redirect URL after successful authentication */
   redirectUrl?: string;
+  /** Whether the authentication is active */
+  isActive?: boolean;
 }
 
 /**
@@ -34,13 +36,15 @@ export function VoiceAuthentication({
   onError,
   onCancel,
   prompt = 'Diga seu nome para se identificar',
-  redirectUrl = '/dashboard'
+  redirectUrl = '/dashboard',
+  isActive = false
 }: VoiceAuthenticationProps): React.ReactElement {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [volume, setVolume] = useState(0);
   const [status, setStatus] = useState<'idle' | 'listening' | 'processing' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isListening, setIsListening] = useState(false);
   
   const router = useRouter();
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -56,6 +60,14 @@ export function VoiceAuthentication({
       stopRecording();
     };
   }, []);
+  
+  useEffect(() => {
+    if (isActive && !isListening) {
+      startListening();
+    } else if (!isActive && isListening) {
+      stopListening();
+    }
+  }, [isActive]);
   
   // Function to initialize speech recognition with proper error handling
   const initializeSpeechRecognition = () => {
@@ -289,10 +301,57 @@ export function VoiceAuthentication({
     }
   };
   
-  // Handle cancel button click
-  const handleCancel = () => {
-    stopRecording();
-    if (onCancel) onCancel();
+  const startListening = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.lang = 'pt-BR';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setTranscript('');
+      };
+
+      recognition.onresult = (event) => {
+        const current = event.resultIndex;
+        const result = event.results[current];
+        const text = result[0].transcript;
+        setTranscript(text);
+
+        if (result.isFinal) {
+          onSuccess(text);
+          stopListening();
+        }
+      };
+
+      recognition.onerror = (event) => {
+        onError('Não foi possível entender. Por favor, tente novamente.');
+        stopListening();
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        if (!transcript) {
+          onError('Não foi possível capturar o áudio. Por favor, tente novamente.');
+        }
+      };
+
+      try {
+        recognition.start();
+      } catch (error) {
+        onError('Erro ao iniciar o reconhecimento de voz. Por favor, tente novamente.');
+      }
+    } else {
+      onError('Seu navegador não suporta reconhecimento de voz. Por favor, use a entrada de texto.');
+    }
+  };
+
+  const stopListening = () => {
+    setIsListening(false);
+    onCancel();
   };
   
   // Render based on status
@@ -324,7 +383,7 @@ export function VoiceAuthentication({
           <p className="mb-4 text-center font-medium">{transcript || "Diga seu nome..."}</p>
           <button 
             className="btn btn-outline"
-            onClick={handleCancel}
+            onClick={stopRecording}
           >
             Cancelar
           </button>
